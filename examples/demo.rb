@@ -83,7 +83,7 @@ transfer_request = GasfreeSdk::Models::TransferRequest.new(
   deadline: Time.now.to_i + 180,
   version: 1,
   nonce: 0,
-  sig: "0x" + "a" * 128
+  sig: "0x#{"a" * 128}"
 )
 
 puts "Transfer Request:"
@@ -137,4 +137,4 @@ puts ""
 puts "For real usage:"
 puts "1. Set GASFREE_API_KEY and GASFREE_API_SECRET environment variables"
 puts "2. Use examples/basic_usage.rb for a complete workflow example"
-puts "3. See README.md for full documentation" 
+puts "3. See README.md for full documentation"

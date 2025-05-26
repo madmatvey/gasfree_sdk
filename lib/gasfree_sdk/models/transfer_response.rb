@@ -109,4 +109,4 @@ module GasfreeSdk
       attribute? :txn_total_cost, Types::Amount
     end
   end
-end 
+end

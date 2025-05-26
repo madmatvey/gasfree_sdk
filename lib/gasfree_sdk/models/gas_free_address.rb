@@ -60,4 +60,4 @@ module GasfreeSdk
       attribute :assets, Types::Array.of(Asset)
     end
   end
-end 
+end

@@ -1,5 +1,46 @@
 AllCops:
-  TargetRubyVersion: 3.1
+  TargetRubyVersion: 3.3
+  SuggestExtensions: false
+  Exclude:
+    - 'vendor/**/*'
+    - 'bin/**/*'
+
+require:
+  - rubocop-rake
+  - rubocop-rspec
+
+Layout/LineLength:
+  Max: 120
+  Exclude:
+    - 'gasfree_sdk.gemspec'
+    - 'examples/**/*'
+
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*'
+    - 'examples/**/*'
+
+Metrics/MethodLength:
+  Max: 15
+  Exclude:
+    - 'spec/**/*'
+
+Metrics/CyclomaticComplexity:
+  Max: 10
+  Exclude:
+    - 'spec/**/*'
+
+Style/Documentation:
+  Exclude:
+    - 'spec/**/*'
+    - 'examples/**/*'
+    - 'lib/gasfree_sdk/errors.rb'
+
+RSpec/ExampleLength:
+  Max: 30
+
+RSpec/MultipleExpectations:
+  Max: 5
 
 Style/StringLiterals:
   EnforcedStyle: double_quotes

@@ -39,4 +39,4 @@ module GasfreeSdk
       attribute :decimal, Types::Integer.constrained(gteq: 0)
     end
   end
-end 
+end

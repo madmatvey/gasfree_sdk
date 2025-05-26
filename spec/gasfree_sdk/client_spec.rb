@@ -230,4 +230,4 @@ RSpec.describe GasfreeSdk::Client do
       end
     end
   end
-end 
+end

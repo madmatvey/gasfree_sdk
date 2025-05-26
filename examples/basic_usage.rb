@@ -14,7 +14,8 @@ end
 
 # Check if we have real API credentials
 if GasfreeSdk.config.api_key == "your-api-key"
-  puts "WARNING: Using placeholder API credentials. Set GASFREE_API_KEY and GASFREE_API_SECRET environment variables for real usage."
+  puts "WARNING: Using placeholder API credentials. Set GASFREE_API_KEY and " \
+       "GASFREE_API_SECRET environment variables for real usage."
   puts "This example will demonstrate the SDK structure but API calls will fail.\n\n"
 end
 
@@ -100,8 +101,9 @@ begin
     puts "  State: #{status.state}"
     puts "  Transaction Hash: #{status.txn_hash}" if status.txn_hash
     break if %w[SUCCEED FAILED].include?(status.state)
+
     sleep 2
   end
 rescue GasfreeSdk::APIError => e
   puts "  Error (#{e.code}): #{e.message}"
-end 
+end

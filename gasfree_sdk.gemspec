@@ -9,7 +9,10 @@ Gem::Specification.new do |spec|
   spec.email = ["potehin@gmail.com"]
 
   spec.summary = "Ruby SDK for GasFree.io - TRC-20/ERC-20 gasless transfer solution"
-  spec.description = "GasFree SDK provides a Ruby interface for interacting with GasFree.io API, enabling gasless transfers of TRC-20/ERC-20 tokens. It supports address generation, transaction signing, and other operations described in the GasFree API specification."
+  spec.description = "GasFree SDK provides a Ruby interface for interacting with GasFree.io API, " \
+                     "enabling gasless transfers of TRC-20/ERC-20 tokens. It supports address " \
+                     "generation, transaction signing, and other operations described in the " \
+                     "GasFree API specification."
   spec.homepage = "https://github.com/madmatvey/gasfree_sdk"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.3.0"
@@ -37,9 +40,9 @@ Gem::Specification.new do |spec|
   spec.add_dependency "dry-struct", "~> 1.6"
   spec.add_dependency "dry-types", "~> 1.7"
   spec.add_dependency "dry-validation", "~> 1.10"
+  spec.add_dependency "eth", "~> 0.5"
   spec.add_dependency "faraday", "~> 2.9"
   spec.add_dependency "faraday-retry", "~> 2.2"
-  spec.add_dependency "eth", "~> 0.5"
 
   # Development dependencies
   spec.add_development_dependency "rake", "~> 13.0"

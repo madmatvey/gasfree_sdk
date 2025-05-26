@@ -48,4 +48,4 @@ module GasfreeSdk
       attribute :config, ProviderConfig
     end
   end
-end 
+end

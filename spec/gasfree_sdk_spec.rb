@@ -6,12 +6,12 @@ RSpec.describe GasfreeSdk do
   end
 
   it "can be configured" do
-    GasfreeSdk.configure do |config|
+    described_class.configure do |config|
       config.api_key = "test-key"
       config.api_secret = "test-secret"
     end
-    
-    expect(GasfreeSdk.config.api_key).to eq("test-key")
-    expect(GasfreeSdk.config.api_secret).to eq("test-secret")
+
+    expect(described_class.config.api_key).to eq("test-key")
+    expect(described_class.config.api_secret).to eq("test-secret")
   end
 end

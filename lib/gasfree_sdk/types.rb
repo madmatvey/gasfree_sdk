@@ -30,11 +30,11 @@ module GasfreeSdk
 
     # State type
     State = Types::String.constrained(included_in: %w[
-      WAITING
-      INPROGRESS
-      CONFIRMING
-      SUCCEED
-      FAILED
-    ])
+                                        WAITING
+                                        INPROGRESS
+                                        CONFIRMING
+                                        SUCCEED
+                                        FAILED
+                                      ])
   end
-end 
+end

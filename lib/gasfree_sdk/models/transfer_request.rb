@@ -47,4 +47,4 @@ module GasfreeSdk
       attribute :sig, Types::String
     end
   end
-end 
+end

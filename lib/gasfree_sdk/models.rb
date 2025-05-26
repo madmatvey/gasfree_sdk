@@ -10,4 +10,4 @@ module GasfreeSdk
   # Models namespace
   module Models
   end
-end 
+end

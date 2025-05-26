@@ -23,9 +23,9 @@ RSpec.describe GasfreeSdk::Models do
     end
 
     it "raises error with invalid address" do
-      expect {
+      expect do
         described_class.new(valid_attributes.merge(token_address: "invalid"))
-      }.to raise_error(Dry::Struct::Error)
+      end.to raise_error(Dry::Struct::Error)
     end
   end
 
@@ -57,11 +57,11 @@ RSpec.describe GasfreeSdk::Models do
     end
 
     it "raises error with invalid config" do
-      expect {
+      expect do
         described_class.new(valid_attributes.merge(
-          config: valid_config.merge(max_pending_transfer: -1)
-        ))
-      }.to raise_error(Dry::Struct::Error)
+                              config: valid_config.merge(max_pending_transfer: -1)
+                            ))
+      end.to raise_error(Dry::Struct::Error)
     end
   end
 
@@ -96,9 +96,9 @@ RSpec.describe GasfreeSdk::Models do
     end
 
     it "raises error with invalid nonce" do
-      expect {
+      expect do
         described_class.new(valid_attributes.merge(nonce: -1))
-      }.to raise_error(Dry::Struct::Error)
+      end.to raise_error(Dry::Struct::Error)
     end
   end
 
@@ -126,9 +126,9 @@ RSpec.describe GasfreeSdk::Models do
     end
 
     it "raises error with invalid version" do
-      expect {
+      expect do
         described_class.new(valid_attributes.merge(version: 2))
-      }.to raise_error(Dry::Struct::Error)
+      end.to raise_error(Dry::Struct::Error)
     end
   end
 
@@ -162,22 +162,22 @@ RSpec.describe GasfreeSdk::Models do
     end
 
     it "raises error with invalid state" do
-      expect {
+      expect do
         described_class.new(valid_attributes.merge(state: "INVALID"))
-      }.to raise_error(Dry::Struct::Error)
+      end.to raise_error(Dry::Struct::Error)
     end
 
     it "allows optional transaction fields" do
       response = described_class.new(valid_attributes.merge(
-        txn_hash: "0x1234567890123456789012345678901234567890123456789012345678901234",
-        txn_block_num: 12345,
-        txn_state: "ON_CHAIN",
-        txn_amount: "1000000"
-      ))
+                                       txn_hash: "0x1234567890123456789012345678901234567890123456789012345678901234",
+                                       txn_block_num: 12_345,
+                                       txn_state: "ON_CHAIN",
+                                       txn_amount: "1000000"
+                                     ))
       expect(response.txn_hash).to be_a(String)
-      expect(response.txn_block_num).to eq(12345)
+      expect(response.txn_block_num).to eq(12_345)
       expect(response.txn_state).to eq("ON_CHAIN")
       expect(response.txn_amount).to eq("1000000")
     end
   end
-end 
+end
