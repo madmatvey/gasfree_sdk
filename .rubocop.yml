@@ -1,5 +1,6 @@
 AllCops:
   TargetRubyVersion: 3.3
+  NewCops: enable
   SuggestExtensions: false
   Exclude:
     - 'vendor/**/*'
@@ -9,12 +10,18 @@ require:
   - rubocop-rake
   - rubocop-rspec
 
+# Disable problematic cops that cause errors
+Capybara/RSpec/PredicateMatcher:
+  Enabled: false
+
+# Layout rules
 Layout/LineLength:
   Max: 120
   Exclude:
     - 'gasfree_sdk.gemspec'
     - 'examples/**/*'
 
+# Metrics rules
 Metrics/BlockLength:
   Exclude:
     - 'spec/**/*'
@@ -30,20 +37,34 @@ Metrics/CyclomaticComplexity:
   Exclude:
     - 'spec/**/*'
 
+# Documentation rules
 Style/Documentation:
   Exclude:
     - 'spec/**/*'
     - 'examples/**/*'
     - 'lib/gasfree_sdk/errors.rb'
 
+# RSpec rules
 RSpec/ExampleLength:
   Max: 30
 
 RSpec/MultipleExpectations:
   Max: 5
 
+# String literal rules
 Style/StringLiterals:
   EnforcedStyle: double_quotes
 
 Style/StringLiteralsInInterpolation:
   EnforcedStyle: double_quotes
+
+# Disable some overly strict cops for this project
+Style/FrozenStringLiteralComment:
+  Enabled: true
+
+# Gemspec rules - be more lenient for development gems
+Gemspec/RequireMFA:
+  Enabled: false
+
+Gemspec/DevelopmentDependencies:
+  Enabled: false

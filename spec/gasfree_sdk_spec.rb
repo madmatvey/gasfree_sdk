@@ -2,7 +2,7 @@
 
 RSpec.describe GasfreeSdk do
   it "has a version number" do
-    expect(GasfreeSdk::VERSION).not_to be nil
+    expect(GasfreeSdk::VERSION).not_to be_nil
   end
 
   it "can be configured" do
