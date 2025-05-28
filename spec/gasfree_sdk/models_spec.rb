@@ -4,9 +4,9 @@ RSpec.describe GasfreeSdk::Models do
   describe GasfreeSdk::Models::Token do
     let(:valid_attributes) do
       {
-        token_address: "0x1234567890123456789012345678901234567890",
-        created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
+        token_address: "TXYZopYRdj2D9XRtbG411XZZ3kM5VkAeBf",
+        created_at: Time.at(1_733_474_531.733),
+        updated_at: Time.at(1_748_426_720.073),
         activate_fee: "1000000",
         transfer_fee: "500000",
         supported: true,
@@ -15,16 +15,49 @@ RSpec.describe GasfreeSdk::Models do
       }
     end
 
-    it "creates a token with valid attributes" do
+    let(:ethereum_token_attributes) do
+      {
+        token_address: "0x1234567890123456789012345678901234567890",
+        created_at: Time.at(1_733_474_531.733),
+        updated_at: Time.at(1_748_426_720.073),
+        activate_fee: "1000000",
+        transfer_fee: "500000",
+        supported: true,
+        symbol: "ETH",
+        decimal: 18
+      }
+    end
+
+    it "creates a token with valid TRON address" do
       token = described_class.new(valid_attributes)
       expect(token.token_address).to eq(valid_attributes[:token_address])
       expect(token.activate_fee).to eq(valid_attributes[:activate_fee])
       expect(token.symbol).to eq(valid_attributes[:symbol])
+      expect(token.created_at).to be_a(Time)
+      expect(token.updated_at).to be_a(Time)
     end
 
-    it "raises error with invalid address" do
+    it "creates a token with valid Ethereum address" do
+      token = described_class.new(ethereum_token_attributes)
+      expect(token.token_address).to eq(ethereum_token_attributes[:token_address])
+      expect(token.symbol).to eq(ethereum_token_attributes[:symbol])
+    end
+
+    it "raises error with invalid address format" do
       expect do
-        described_class.new(valid_attributes.merge(token_address: "invalid"))
+        described_class.new(valid_attributes.merge(token_address: "invalid-address"))
+      end.to raise_error(Dry::Struct::Error)
+    end
+
+    it "raises error with invalid TRON address (wrong length)" do
+      expect do
+        described_class.new(valid_attributes.merge(token_address: "TShortAddress"))
+      end.to raise_error(Dry::Struct::Error)
+    end
+
+    it "raises error with invalid Ethereum address (wrong length)" do
+      expect do
+        described_class.new(valid_attributes.merge(token_address: "0x123"))
       end.to raise_error(Dry::Struct::Error)
     end
   end
@@ -136,8 +169,8 @@ RSpec.describe GasfreeSdk::Models do
     let(:valid_attributes) do
       {
         id: "transfer-id",
-        created_at: "2024-01-01T00:00:00Z",
-        updated_at: "2024-01-01T00:00:00Z",
+        created_at: 1_704_067_200_000, # 2024-01-01T00:00:00Z in milliseconds
+        updated_at: 1_704_067_200_000, # 2024-01-01T00:00:00Z in milliseconds
         account_address: "0x1234567890123456789012345678901234567890",
         gas_free_address: "0x1234567890123456789012345678901234567890",
         provider_address: "0x1234567890123456789012345678901234567890",
@@ -147,7 +180,7 @@ RSpec.describe GasfreeSdk::Models do
         max_fee: "100000",
         signature: "0x1234567890123456789012345678901234567890123456789012345678901234",
         nonce: 0,
-        expired_at: "2024-01-01T00:03:00Z",
+        expired_at: 1_704_067_380_000, # 2024-01-01T00:03:00Z in milliseconds
         state: "WAITING",
         estimated_activate_fee: "50000",
         estimated_transfer_fee: "30000"
@@ -159,6 +192,9 @@ RSpec.describe GasfreeSdk::Models do
       expect(response.id).to eq(valid_attributes[:id])
       expect(response.state).to eq(valid_attributes[:state])
       expect(response.amount).to eq(valid_attributes[:amount])
+      expect(response.created_at).to be_a(Time)
+      expect(response.updated_at).to be_a(Time)
+      expect(response.expired_at).to be_a(Time)
     end
 
     it "raises error with invalid state" do

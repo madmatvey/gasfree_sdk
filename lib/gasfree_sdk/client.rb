@@ -3,6 +3,7 @@
 require "base64"
 require "openssl"
 require "time"
+require "uri"
 
 module GasfreeSdk
   # Client for interacting with the GasFree API
@@ -17,20 +18,23 @@ module GasfreeSdk
         f.request :retry, GasfreeSdk.config.retry_options
         f.response :json
         f.adapter Faraday.default_adapter
+        f.response :logger, ::Logger.new($stdout), bodies: false
       end
     end
 
     # Get all supported tokens
     # @return [Array<Token>] List of supported tokens
     def tokens
-      response = get("/api/v1/config/token/all")
-      response.dig("data", "tokens").map { |token| Models::Token.new(token) }
+      response = get("api/v1/config/token/all")
+      response.dig("data", "tokens").map do |token|
+        Models::Token.new(transform_token_data(token))
+      end
     end
 
     # Get all service providers
     # @return [Array<Provider>] List of service providers
     def providers
-      response = get("/api/v1/config/provider/all")
+      response = get("api/v1/config/provider/all")
       response.dig("data", "providers").map { |provider| Models::Provider.new(provider) }
     end
 
@@ -38,7 +42,7 @@ module GasfreeSdk
     # @param account_address [String] The user's EOA address
     # @return [GasFreeAddress] The GasFree account info
     def address(account_address)
-      response = get("/api/v1/address/#{account_address}")
+      response = get("api/v1/address/#{account_address}")
       Models::GasFreeAddress.new(response["data"])
     end
 
@@ -46,7 +50,7 @@ module GasfreeSdk
     # @param request [TransferRequest] The transfer request
     # @return [TransferResponse] The transfer response
     def submit_transfer(request)
-      response = post("/api/v1/gasfree/submit", request.to_h)
+      response = post("api/v1/gasfree/submit", request.to_h)
       Models::TransferResponse.new(response["data"])
     end
 
@@ -54,7 +58,7 @@ module GasfreeSdk
     # @param trace_id [String] The transfer trace ID
     # @return [TransferResponse] The transfer status
     def transfer_status(trace_id)
-      response = get("/api/v1/gasfree/#{trace_id}")
+      response = get("api/v1/gasfree/#{trace_id}")
       Models::TransferResponse.new(response["data"])
     end
 
@@ -67,7 +71,7 @@ module GasfreeSdk
     def get(path, params = {})
       timestamp = Time.now.to_i
       response = connection.get(path, params) do |req|
-        sign_request(req, "GET", path, timestamp)
+        sign_request(req, "GET", normalize_path(path), timestamp)
       end
       handle_response(response)
     end
@@ -80,9 +84,16 @@ module GasfreeSdk
       timestamp = Time.now.to_i
       response = connection.post(path) do |req|
         req.body = body
-        sign_request(req, "POST", path, timestamp)
+        sign_request(req, "POST", normalize_path(path), timestamp)
       end
       handle_response(response)
+    end
+
+    # Normalize path for signature calculation (needs leading slash)
+    # @param path [String] The API path
+    # @return [String] Normalized path
+    def normalize_path(path)
+      path.start_with?("/") ? path : "/#{path}"
     end
 
     # Sign an API request
@@ -90,13 +101,23 @@ module GasfreeSdk
     # @param method [String] HTTP method
     # @param path [String] Request path
     # @param timestamp [Integer] Request timestamp
-    def sign_request(request, method, path, timestamp)
+    def sign_request(request, method, path, timestamp) # rubocop:disable Metrics/AbcSize
       api_key = GasfreeSdk.config.api_key
       api_secret = GasfreeSdk.config.api_secret
 
       raise AuthenticationError, "API key and secret are required" if api_key.nil? || api_secret.nil?
 
-      message = "#{method}#{path}#{timestamp}"
+      # Extract the base path from the endpoint URL
+      # For https://open-test.gasfree.io/nile/ the base path is /nile
+      endpoint_uri = URI(GasfreeSdk.config.api_endpoint)
+      base_path = endpoint_uri.path.chomp("/") # Remove trailing slash
+
+      # Combine base path with API path for signature
+      # e.g., /nile + /api/v1/config/token/all = /nile/api/v1/config/token/all
+      full_path = "#{base_path}#{path}"
+
+      # According to GasFree API documentation, the message format is: method + path + timestamp
+      message = "#{method}#{full_path}#{timestamp}"
       signature = Base64.strict_encode64(
         OpenSSL::HMAC.digest("SHA256", api_secret, message)
       )
@@ -119,6 +140,22 @@ module GasfreeSdk
         reason: data["reason"],
         message: data["message"]
       )
+    end
+
+    # Transform token data from API format to model format
+    # @param token_data [Hash] Token data from API
+    # @return [Hash] Transformed token data
+    def transform_token_data(token_data)
+      {
+        token_address: token_data["tokenAddress"],
+        created_at: Types::JSON::Time.call(token_data["createdAt"]),
+        updated_at: Types::JSON::Time.call(token_data["updatedAt"]),
+        activate_fee: Types::JSON::Amount.call(token_data["activateFee"]),
+        transfer_fee: Types::JSON::Amount.call(token_data["transferFee"]),
+        supported: token_data["supported"],
+        symbol: token_data["symbol"],
+        decimal: token_data["decimal"]
+      }
     end
   end
 end

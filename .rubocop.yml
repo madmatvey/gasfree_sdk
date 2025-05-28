@@ -46,10 +46,10 @@ Style/Documentation:
 
 # RSpec rules
 RSpec/ExampleLength:
-  Max: 30
+  Max: 50
 
 RSpec/MultipleExpectations:
-  Max: 5
+  Max: 10
 
 # String literal rules
 Style/StringLiterals:

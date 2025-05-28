@@ -7,8 +7,12 @@ module GasfreeSdk
   module Types
     include Dry.Types()
 
-    # Address type with validation
-    Address = Types::String.constrained(format: /\A(0x)?[0-9a-fA-F]{40}\z/)
+    # Address type with validation for both Ethereum and TRON addresses
+    # Ethereum: 0x followed by 40 hex characters OR just 40 hex characters
+    # TRON: Starts with T followed by 33 characters (base58)
+    Address = Types::String.constrained(
+      format: /\A(0x[0-9a-fA-F]{40}|[0-9a-fA-F]{40}|T[0-9A-Za-z]{33})\z/
+    )
 
     # Hash type with validation
     Hash = Types::String.constrained(format: /\A(0x)?[0-9a-fA-F]{64}\z/)
@@ -36,5 +40,24 @@ module GasfreeSdk
                                         SUCCEED
                                         FAILED
                                       ])
+
+    # JSON namespace for API response parsing
+    module JSON
+      # Convert millisecond timestamp or ISO date string to Time object
+      # Takes an integer (milliseconds) or string (ISO format) and returns a Time
+      Time = Types.Constructor(::Time) do |value|
+        case value
+        when ::Integer
+          ::Time.at(value / 1000.0)
+        when ::String
+          ::Time.parse(value)
+        else
+          raise ArgumentError, "Expected Integer or String, got #{value.class}"
+        end
+      end
+
+      # Convert integer amount to string
+      Amount = Types.Constructor(Types::String, &:to_s)
+    end
   end
 end

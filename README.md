@@ -44,6 +44,29 @@ GasfreeSdk.configure do |config|
 end
 ```
 
+### API Endpoints
+
+The SDK supports different API endpoints depending on your needs:
+
+**Production (Mainnet):**
+```ruby
+config.api_endpoint = "https://open.gasfree.io/tron/" # Default
+```
+
+**Testnet (Nile):**
+```ruby
+config.api_endpoint = "https://open-test.gasfree.io/nile/"
+# or without trailing slash
+config.api_endpoint = "https://open-test.gasfree.io/nile"
+```
+
+**Custom endpoint:**
+```ruby
+config.api_endpoint = "https://your-custom-endpoint.com/api/"
+```
+
+**Note:** The SDK automatically handles URL path construction regardless of whether you include a trailing slash in the endpoint URL. API requests will be correctly routed to the specified endpoint with the appropriate API paths appended.
+
 ## Usage
 
 ### Initialize Client
