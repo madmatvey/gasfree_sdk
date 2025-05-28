@@ -34,9 +34,9 @@ puts "==============="
 
 # Token model
 token = GasfreeSdk::Models::Token.new(
-  token_address: "0x1234567890123456789012345678901234567890",
-  created_at: "2024-01-01T00:00:00Z",
-  updated_at: "2024-01-01T00:00:00Z",
+  token_address: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t",
+  created_at: Time.parse("2024-01-01T00:00:00Z"),
+  updated_at: Time.parse("2024-01-01T00:00:00Z"),
   activate_fee: "1000000",
   transfer_fee: "500000",
   supported: true,
@@ -53,7 +53,7 @@ puts ""
 
 # Provider model
 provider = GasfreeSdk::Models::Provider.new(
-  address: "0x1234567890123456789012345678901234567890",
+  address: "TGzz8gjYiYRqpfmDwnLxfgPuLVNmpCswVp",
   name: "Demo Provider",
   icon: "",
   website: "https://demo.provider.com",
@@ -76,8 +76,8 @@ puts ""
 transfer_request = GasfreeSdk::Models::TransferRequest.new(
   token: token.token_address,
   service_provider: provider.address,
-  user: "0x1111111111111111111111111111111111111111",
-  receiver: "0x2222222222222222222222222222222222222222",
+  user: "TZ3oPnE1SdAUL1YRd9GJQHenxrXjy4paAn",
+  receiver: "TX554G9uKsEv1U6TBQnNPC7dkhbvBFhgrD",
   value: "1000000",
   max_fee: "100000",
   deadline: Time.now.to_i + 180,
@@ -100,10 +100,10 @@ puts ""
 # Transfer response model
 transfer_response = GasfreeSdk::Models::TransferResponse.new(
   id: "demo-transfer-id",
-  created_at: "2024-01-01T00:00:00Z",
-  updated_at: "2024-01-01T00:00:00Z",
+  created_at: Time.parse("2024-01-01T00:00:00Z").to_i * 1000, # milliseconds
+  updated_at: Time.parse("2024-01-01T00:00:00Z").to_i * 1000, # milliseconds
   account_address: transfer_request.user,
-  gas_free_address: "0x3333333333333333333333333333333333333333",
+  gas_free_address: "TGxDyymFq4cSvNjvqGstCxaoG2JWW3x5Mg",
   provider_address: provider.address,
   target_address: transfer_request.receiver,
   token_address: token.token_address,
@@ -111,7 +111,7 @@ transfer_response = GasfreeSdk::Models::TransferResponse.new(
   max_fee: transfer_request.max_fee,
   signature: transfer_request.sig,
   nonce: transfer_request.nonce,
-  expired_at: "2024-01-01T00:03:00Z",
+  expired_at: Time.parse("2024-01-01T00:03:00Z").to_i * 1000, # milliseconds
   state: "WAITING"
 )
 
@@ -119,6 +119,8 @@ puts "Transfer Response:"
 puts "  ID: #{transfer_response.id}"
 puts "  State: #{transfer_response.state}"
 puts "  Amount: #{transfer_response.amount}"
+puts "  Created At: #{transfer_response.created_at}"
+puts "  Updated At: #{transfer_response.updated_at}"
 puts "  Expires At: #{transfer_response.expired_at}"
 puts ""
 

@@ -6,6 +6,9 @@
 /pkg/
 /spec/reports/
 /tmp/
+/examples/test_with_real_data.rb
+/examples/test_with_real_data_prod.rb
+/examples/test_keccac.rb
 
 # rspec failure tracking
 .rspec_status

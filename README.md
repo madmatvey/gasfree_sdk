@@ -1,17 +1,18 @@
-# GasfreeSdk
+# GasFree SDK
 
-Ruby SDK for interacting with the GasFree.io API, enabling gasless transfers of TRC-20/ERC-20 tokens.
+Ruby SDK for GasFree.io - TRC-20 gasless transfer solution.
 
-## Features
+## 💬 Support & Consulting
 
-- Supports gasless transfers of TRC-20/ERC-20 tokens
-- Handles address generation and transaction signing
-- Provides a clean, Ruby-like interface to the GasFree API
-- Built with dry-rb for robust type checking and validation
-- Comprehensive RSpec test coverage
-- Thread-safe configuration
+If you encounter any issues, feel free to open a discussion or report a bug via the [GitHub Issues](https://github.com/madmatvey/gasfree_sdk/issues) page.
+
+You can also [hire me as an external consultant](https://madmatvey.github.io/about/#cv) if you need help integrating or customizing the gem for your project.
+
+If you find this gem useful and want to support further development, you're welcome to [donate here](https://madmatvey.github.io/about/#donate-me).
 
 ## Installation
+
+This gem is published on [RubyGems.org](https://rubygems.org/gems/gasfree_sdk).
 
 Add this line to your application's Gemfile:
 
@@ -21,30 +22,25 @@ gem 'gasfree_sdk'
 
 And then execute:
 
-```bash
-bundle install
-```
+    $ bundle install
 
 Or install it yourself as:
 
-```bash
-gem install gasfree_sdk
-```
+    $ gem install gasfree_sdk
 
 ## Configuration
 
-Configure the SDK with your API credentials:
-
 ```ruby
+require 'gasfree_sdk'
+
 GasfreeSdk.configure do |config|
   config.api_key = "your-api-key"
   config.api_secret = "your-api-secret"
-  config.api_endpoint = "https://open.gasfree.io/tron/" # Optional, defaults to mainnet
-  config.default_chain_id = 1 # Optional, defaults to Ethereum mainnet
+  config.api_endpoint = "https://open.gasfree.io/tron/"  # TRON endpoint
 end
 ```
 
-## Usage
+## Basic Usage
 
 ### Initialize Client
 
@@ -57,10 +53,9 @@ client = GasfreeSdk.client
 ```ruby
 tokens = client.tokens
 tokens.each do |token|
-  puts "Token: #{token.symbol}"
-  puts "Address: #{token.token_address}"
-  puts "Activation Fee: #{token.activate_fee}"
-  puts "Transfer Fee: #{token.transfer_fee}"
+  puts "#{token.symbol} (#{token.token_address})"
+  puts "  Activation Fee: #{token.activate_fee}"
+  puts "  Transfer Fee: #{token.transfer_fee}"
 end
 ```
 
@@ -69,76 +64,236 @@ end
 ```ruby
 providers = client.providers
 providers.each do |provider|
-  puts "Provider: #{provider.name}"
-  puts "Address: #{provider.address}"
-  puts "Max Pending Transfers: #{provider.config.max_pending_transfer}"
+  puts "#{provider.name} (#{provider.address})"
+  puts "  Max Pending Transfers: #{provider.config.max_pending_transfer}"
+  puts "  Default Deadline: #{provider.config.default_deadline_duration}s"
 end
 ```
 
-### Get GasFree Account Info
+### Check Account Information
 
 ```ruby
-account = client.address("0x1234...")
+account = client.address("TYourTronAddress")
 puts "GasFree Address: #{account.gas_free_address}"
 puts "Active: #{account.active}"
 puts "Nonce: #{account.nonce}"
 
 account.assets.each do |asset|
-  puts "Token: #{asset.token_symbol}"
-  puts "Frozen Amount: #{asset.frozen}"
+  puts "#{asset.token_symbol}: #{asset.frozen} frozen"
 end
 ```
 
-### Submit GasFree Transfer
+## TRON EIP-712 Signature Module
+
+The SDK includes a comprehensive EIP-712 signature implementation specifically designed for TRON GasFree transfers. This module handles the complex cryptographic operations required for signing structured data according to the EIP-712 standard as implemented by TRON (TIP-712).
+
+### Features
+
+- **Complete EIP-712 Implementation**: Full support for EIP-712 structured data signing
+- **TRON-Specific Adaptations**: Handles TRON address encoding and TIP-712 specifications
+- **Dual Network Support**: Separate configurations for TRON Mainnet and Testnet (Nile)
+- **Flexible Key Handling**: Support for multiple data key formats (camelCase, snake_case)
+- **Built-in Cryptography**: Includes Keccak256 hashing and Base58 encoding for TRON addresses
+
+### Basic Signature Usage
 
 ```ruby
-request = GasfreeSdk::Models::TransferRequest.new(
-  token: "0x1234...", # Token address
-  service_provider: "0x5678...", # Provider address
-  user: "0x9abc...", # User's EOA address
-  receiver: "0xdef0...", # Recipient address
-  value: "1000000", # Amount in smallest unit
-  max_fee: "100000", # Maximum fee in smallest unit
-  deadline: Time.now.to_i + 180, # 3 minutes from now
+# Example message data
+message_data = {
+  token: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", # USDT TRC-20
+  serviceProvider: "TGzz8gjYiYRqpfmDwnLxfgPuLVNmpCswVp",
+  user: "TYRhsi1fkke2tjdVW9XGYLjf8TgbbutEgY",
+  receiver: "TW1dWXfta5ygVN298JBN2UPhaSAUzo2owZ",
+  value: "3000000", # 3 USDT (6 decimals)
+  maxFee: "2000000", # 2 USDT max fee
+  deadline: (Time.now.to_i + 300).to_s, # 5 minutes from now
   version: 1,
-  nonce: 0,
-  sig: "0x..." # User's signature
+  nonce: 0
+}
+
+private_key = "your_private_key_hex"
+
+# Sign for TRON Testnet (Nile)
+testnet_signature = GasfreeSdk::TronEIP712Signer.sign_typed_data_testnet(private_key, message_data)
+
+# Sign for TRON Mainnet
+mainnet_signature = GasfreeSdk::TronEIP712Signer.sign_typed_data_mainnet(private_key, message_data)
+
+# Generic signing with custom domain
+signature = GasfreeSdk::TronEIP712Signer.sign_typed_data(
+  private_key, 
+  message_data, 
+  domain: GasfreeSdk::TronEIP712Signer::DOMAIN_TESTNET
+)
+```
+
+### Advanced Usage
+
+#### Custom Domain Configuration
+
+```ruby
+custom_domain = {
+  name: "GasFreeController",
+  version: "V1.0.0",
+  chainId: 728_126_428,
+  verifyingContract: "THQGuFzL87ZqhxkgqYEryRAd7gqFqL5rdc"
+}
+
+signature = GasfreeSdk::TronEIP712Signer.sign_typed_data(
+  private_key,
+  message_data,
+  domain: custom_domain,
+  use_ethereum_v: true
+)
+```
+
+#### Individual Cryptographic Operations
+
+```ruby
+# Keccak256 hashing
+hash = GasfreeSdk::TronEIP712Signer.keccac256("data to hash")
+hex_hash = GasfreeSdk::TronEIP712Signer.keccac256_hex("data to hash")
+
+# EIP-712 type encoding
+encoded_type = GasfreeSdk::TronEIP712Signer.encode_type(:PermitTransfer)
+
+# Structured data hashing
+message_hash = GasfreeSdk::TronEIP712Signer.hash_struct(:PermitTransfer, message_data)
+domain_hash = GasfreeSdk::TronEIP712Signer.hash_domain
+```
+
+#### TRON Address Utilities
+
+```ruby
+# Base58 encoding/decoding for TRON addresses
+binary_data = GasfreeSdk::Base58.base58_to_binary("TYRhsi1fkke2tjdVW9XGYLjf8TgbbutEgY")
+base58_string = GasfreeSdk::Base58.binary_to_base58(binary_data)
+```
+
+### Domain Constants
+
+The module provides pre-configured domain constants for both networks:
+
+```ruby
+# TRON Testnet (Nile)
+GasfreeSdk::TronEIP712Signer::DOMAIN_TESTNET
+# => {
+#   name: "GasFreeController",
+#   version: "V1.0.0", 
+#   chainId: 728_126_428,
+#   verifyingContract: "THQGuFzL87ZqhxkgqYEryRAd7gqFqL5rdc"
+# }
+
+# TRON Mainnet
+GasfreeSdk::TronEIP712Signer::DOMAIN_MAINNET
+# => {
+#   name: "GasFreeController",
+#   version: "V1.0.0",
+#   chainId: 3_448_148_188,
+#   verifyingContract: "TFFAMQLZybALaLb4uxHA9RBE7pxhUAjF3U"
+# }
+```
+
+### Submit Transfer with Signature
+
+```ruby
+# Create and submit a transfer request
+token = client.tokens.first
+provider = client.providers.first
+
+message_data = {
+  token: token.token_address,
+  serviceProvider: provider.address,
+  user: "TYourTronAddress",
+  receiver: "TReceiverAddress",
+  value: "1000000", # 1 USDT
+  maxFee: "500000",  # 0.5 USDT max fee
+  deadline: (Time.now.to_i + provider.config.default_deadline_duration).to_s,
+  version: 1,
+  nonce: account.nonce
+}
+
+# Sign the message
+signature = GasfreeSdk::TronEIP712Signer.sign_typed_data_testnet(private_key, message_data)
+
+# Create transfer request
+request = GasfreeSdk::Models::TransferRequest.new(
+  token: message_data[:token],
+  service_provider: message_data[:serviceProvider],
+  user: message_data[:user],
+  receiver: message_data[:receiver],
+  value: message_data[:value],
+  max_fee: message_data[:maxFee],
+  deadline: message_data[:deadline].to_i,
+  version: message_data[:version],
+  nonce: message_data[:nonce],
+  sig: signature
 )
 
+# Submit the transfer
 response = client.submit_transfer(request)
 puts "Transfer ID: #{response.id}"
 puts "State: #{response.state}"
 ```
 
-### Check Transfer Status
+### Monitor Transfer Status
 
 ```ruby
-status = client.transfer_status("transfer-id")
-puts "State: #{status.state}"
-puts "Transaction Hash: #{status.txn_hash}" if status.txn_hash
+transfer_id = response.id
+
+loop do
+  status = client.transfer_status(transfer_id)
+  puts "State: #{status.state}"
+  puts "Transaction Hash: #{status.txn_hash}" if status.txn_hash
+  
+  break if %w[SUCCEED FAILED].include?(status.state)
+  sleep 2
+end
 ```
 
 ## Error Handling
 
-The SDK provides detailed error classes for different types of errors:
-
 ```ruby
 begin
-  client.submit_transfer(request)
-rescue GasfreeSdk::InsufficientBalanceError => e
-  puts "Insufficient balance: #{e.message}"
-rescue GasfreeSdk::DeadlineExceededError => e
-  puts "Deadline exceeded: #{e.message}"
+  response = client.submit_transfer(request)
 rescue GasfreeSdk::APIError => e
-  puts "API error (#{e.code}): #{e.message}"
+  puts "API Error (#{e.code}): #{e.message}"
+  
+  case e.message
+  when /insufficient balance/
+    puts "Solution: Get test tokens or transfer tokens to GasFree address"
+  when /max fee exceeded/
+    puts "Solution: Increase maxFee parameter"
+  when /Invalid signature/
+    puts "Solution: Check private key and address correspondence"
+  end
+rescue StandardError => e
+  puts "Error: #{e.message}"
 end
 ```
+
+## Examples
+
+See the `examples/` directory for complete working examples:
+
+- `examples/simple_usage_example.rb` - Basic TronEIP712Signer usage
+
+## Dependencies
+
+- `dry-configurable` - Configuration management
+- `dry-struct` - Data structures
+- `dry-types` - Type system
+- `dry-validation` - Data validation
+- `faraday` - HTTP client
+- `faraday-retry` - HTTP retry logic
+- `eth` - Ethereum utilities
+- `rbsecp256k1` - Cryptographic operations for EIP-712 signatures
 
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
-To install this gem onto your local machine, run `bundle exec rake install`.
+To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 
 ## Contributing
 
@@ -146,4 +301,4 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/madmat
 
 ## License
 
-The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
+The gem is available as open source under the terms of the [LGPL v3.0](https://www.gnu.org/licenses/lgpl-3.0.html) © 2025 Eugene Leontev (https://github.com/madmatvey)

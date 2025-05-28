@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    gasfree_sdk (0.1.0)
+    gasfree_sdk (1.0.0)
       dry-configurable (~> 1.1)
       dry-struct (~> 1.6)
       dry-types (~> 1.7)
@@ -9,6 +9,7 @@ PATH
       eth (~> 0.5)
       faraday (~> 2.9)
       faraday-retry (~> 2.2)
+      rbsecp256k1 (~> 6.0)
 
 GEM
   remote: https://rubygems.org/

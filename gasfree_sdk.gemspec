@@ -14,7 +14,7 @@ Gem::Specification.new do |spec|
                      "generation, transaction signing, and other operations described in the " \
                      "GasFree API specification."
   spec.homepage = "https://github.com/madmatvey/gasfree_sdk"
-  spec.license = "MIT"
+  spec.license = "LGPL-3.0"
   spec.required_ruby_version = ">= 3.3.0"
 
   spec.metadata["allowed_push_host"] = "https://rubygems.org"
@@ -43,6 +43,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "eth", "~> 0.5"
   spec.add_dependency "faraday", "~> 2.9"
   spec.add_dependency "faraday-retry", "~> 2.2"
+  spec.add_dependency "rbsecp256k1", "~> 6.0"
 
   # Development dependencies
   spec.add_development_dependency "rake", "~> 13.0"
