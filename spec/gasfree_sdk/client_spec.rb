@@ -101,19 +101,19 @@ RSpec.describe GasfreeSdk::Client do
           body: {
             code: 200,
             data: {
-              account_address: account_address,
-              gas_free_address: "0x1234567890123456789012345678901234567890",
+              accountAddress: account_address,
+              gasFreeAddress: "0x1234567890123456789012345678901234567890",
               active: true,
               nonce: 0,
-              allow_submit: true,
+              allowSubmit: true,
               assets: [
                 {
-                  token_address: "0x1234567890123456789012345678901234567890",
-                  token_symbol: "USDT",
-                  activate_fee: "1000000",
-                  transfer_fee: "500000",
+                  tokenAddress: "0x1234567890123456789012345678901234567890",
+                  tokenSymbol: "USDT",
+                  activateFee: 1_000_000,
+                  transferFee: 500_000,
                   decimal: 6,
-                  frozen: "0"
+                  frozen: 0
                 }
               ]
             }

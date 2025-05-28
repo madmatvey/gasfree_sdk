@@ -45,14 +45,14 @@ module GasfreeSdk
     # @return [GasFreeAddress] The GasFree account info
     def address(account_address)
       response = get("api/v1/address/#{account_address}")
-      Models::GasFreeAddress.new(response["data"])
+      Models::GasFreeAddress.new(transform_address_data(response["data"]))
     end
 
     # Submit a GasFree transfer
     # @param request [TransferRequest] The transfer request
     # @return [TransferResponse] The transfer response
     def submit_transfer(request)
-      response = post("api/v1/gasfree/submit", request.to_h)
+      response = post("api/v1/gasfree/submit", transform_transfer_request_data(request.to_h))
       Models::TransferResponse.new(response["data"])
     end
 
@@ -144,6 +144,24 @@ module GasfreeSdk
       )
     end
 
+    # Transform transfer request data from model format to API format
+    # @param request_data [Hash] Transfer request data from model
+    # @return [Hash] Transformed transfer request data for API
+    def transform_transfer_request_data(request_data)
+      {
+        "token" => request_data[:token],
+        "serviceProvider" => request_data[:service_provider], # snake_case to camelCase
+        "user" => request_data[:user],
+        "receiver" => request_data[:receiver],
+        "value" => request_data[:value],
+        "maxFee" => request_data[:max_fee], # snake_case to camelCase
+        "deadline" => request_data[:deadline],
+        "version" => request_data[:version],
+        "nonce" => request_data[:nonce],
+        "sig" => request_data[:sig]
+      }
+    end
+
     # Transform token data from API format to model format
     # @param token_data [Hash] Token data from API
     # @return [Hash] Transformed token data
@@ -182,6 +200,34 @@ module GasfreeSdk
         min_deadline_duration: config_data["minDeadlineDuration"],
         max_deadline_duration: config_data["maxDeadlineDuration"],
         default_deadline_duration: config_data["defaultDeadlineDuration"]
+      }
+    end
+
+    # Transform address data from API format to model format
+    # @param address_data [Hash] Address data from API
+    # @return [Hash] Transformed address data
+    def transform_address_data(address_data)
+      {
+        account_address: address_data["accountAddress"],
+        gas_free_address: address_data["gasFreeAddress"],
+        active: address_data["active"],
+        nonce: address_data["nonce"],
+        allow_submit: address_data["allowSubmit"],
+        assets: address_data["assets"]&.map { |asset| transform_asset_data(asset) } || []
+      }
+    end
+
+    # Transform asset data from API format to model format
+    # @param asset_data [Hash] Asset data from API
+    # @return [Hash] Transformed asset data
+    def transform_asset_data(asset_data)
+      {
+        token_address: asset_data["tokenAddress"],
+        token_symbol: asset_data["tokenSymbol"],
+        activate_fee: Types::JSON::Amount.call(asset_data["activateFee"]),
+        transfer_fee: Types::JSON::Amount.call(asset_data["transferFee"]),
+        decimal: asset_data["decimal"],
+        frozen: Types::JSON::Amount.call(asset_data["frozen"])
       }
     end
   end
