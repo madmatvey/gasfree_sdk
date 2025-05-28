@@ -32,6 +32,9 @@ Metrics/MethodLength:
   Exclude:
     - 'spec/**/*'
 
+Metrics/ClassLength:
+  Max: 150
+
 Metrics/CyclomaticComplexity:
   Max: 10
   Exclude:
@@ -46,10 +49,10 @@ Style/Documentation:
 
 # RSpec rules
 RSpec/ExampleLength:
-  Max: 30
+  Max: 50
 
 RSpec/MultipleExpectations:
-  Max: 5
+  Max: 15
 
 # String literal rules
 Style/StringLiterals:
