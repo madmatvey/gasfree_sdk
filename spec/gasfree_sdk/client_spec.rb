@@ -59,15 +59,15 @@ RSpec.describe GasfreeSdk::Client do
             data: {
               providers: [
                 {
-                  address: "0x1234567890123456789012345678901234567890",
-                  name: "Provider-1",
-                  icon: "",
-                  website: "",
+                  address: "TKtWbdzEq5ss9vTS9kwRhBp5mXmBfBns3E",
+                  name: "gasfree-provider",
+                  icon: "https://example.com/icon.png",
+                  website: "https://gasfree.io",
                   config: {
-                    max_pending_transfer: 1,
-                    min_deadline_duration: 60,
-                    max_deadline_duration: 600,
-                    default_deadline_duration: 180
+                    maxPendingTransfer: 1,
+                    minDeadlineDuration: 60,
+                    maxDeadlineDuration: 3600,
+                    defaultDeadlineDuration: 180
                   }
                 }
               ]
@@ -79,7 +79,15 @@ RSpec.describe GasfreeSdk::Client do
       providers = client.providers
       expect(providers).to be_an(Array)
       expect(providers.first).to be_a(GasfreeSdk::Models::Provider)
-      expect(providers.first.name).to eq("Provider-1")
+      expect(providers.first.name).to eq("gasfree-provider")
+      expect(providers.first.address).to eq("TKtWbdzEq5ss9vTS9kwRhBp5mXmBfBns3E")
+      expect(providers.first.icon).to eq("https://example.com/icon.png")
+      expect(providers.first.website).to eq("https://gasfree.io")
+      expect(providers.first.config).to be_a(GasfreeSdk::Models::ProviderConfig)
+      expect(providers.first.config.max_pending_transfer).to eq(1)
+      expect(providers.first.config.min_deadline_duration).to eq(60)
+      expect(providers.first.config.max_deadline_duration).to eq(3600)
+      expect(providers.first.config.default_deadline_duration).to eq(180)
     end
   end
 

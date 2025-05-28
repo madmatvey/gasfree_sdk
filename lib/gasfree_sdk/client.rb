@@ -35,7 +35,9 @@ module GasfreeSdk
     # @return [Array<Provider>] List of service providers
     def providers
       response = get("api/v1/config/provider/all")
-      response.dig("data", "providers").map { |provider| Models::Provider.new(provider) }
+      response.dig("data", "providers").map do |provider|
+        Models::Provider.new(transform_provider_data(provider))
+      end
     end
 
     # Get GasFree account info
@@ -155,6 +157,31 @@ module GasfreeSdk
         supported: token_data["supported"],
         symbol: token_data["symbol"],
         decimal: token_data["decimal"]
+      }
+    end
+
+    # Transform provider data from API format to model format
+    # @param provider_data [Hash] Provider data from API
+    # @return [Hash] Transformed provider data
+    def transform_provider_data(provider_data)
+      {
+        address: provider_data["address"],
+        name: provider_data["name"],
+        icon: provider_data["icon"],
+        website: provider_data["website"],
+        config: transform_provider_config_data(provider_data["config"])
+      }
+    end
+
+    # Transform provider config data from API format to model format
+    # @param config_data [Hash] Provider config data from API
+    # @return [Hash] Transformed provider config data
+    def transform_provider_config_data(config_data)
+      {
+        max_pending_transfer: config_data["maxPendingTransfer"],
+        min_deadline_duration: config_data["minDeadlineDuration"],
+        max_deadline_duration: config_data["maxDeadlineDuration"],
+        default_deadline_duration: config_data["defaultDeadlineDuration"]
       }
     end
   end

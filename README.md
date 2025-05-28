@@ -89,13 +89,41 @@ end
 
 ### Get Service Providers
 
+Service providers are entities that facilitate gasless transfers. Each provider has its own configuration and constraints:
+
 ```ruby
 providers = client.providers
 providers.each do |provider|
   puts "Provider: #{provider.name}"
   puts "Address: #{provider.address}"
-  puts "Max Pending Transfers: #{provider.config.max_pending_transfer}"
+  puts "Website: #{provider.website}"
+  puts "Icon: #{provider.icon}"
+  
+  # Provider configuration constraints
+  config = provider.config
+  puts "Max Pending Transfers: #{config.max_pending_transfer}"
+  puts "Min Deadline Duration: #{config.min_deadline_duration}s"
+  puts "Max Deadline Duration: #{config.max_deadline_duration}s"
+  puts "Default Deadline Duration: #{config.default_deadline_duration}s"
 end
+```
+
+When creating transfer requests, you must respect the provider's constraints:
+- Choose a deadline between `min_deadline_duration` and `max_deadline_duration`
+- Ensure you don't exceed `max_pending_transfer` concurrent transfers
+- Use `default_deadline_duration` as a safe default deadline
+
+Example of using provider constraints:
+
+```ruby
+provider = providers.first
+deadline = Time.now.to_i + provider.config.default_deadline_duration
+
+request = GasfreeSdk::Models::TransferRequest.new(
+  # ... other fields ...
+  service_provider: provider.address,
+  deadline: deadline
+)
 ```
 
 ### Get GasFree Account Info
