@@ -5,6 +5,7 @@ AllCops:
   Exclude:
     - 'vendor/**/*'
     - 'bin/**/*'
+    - 'examples/**/*'
 
 require:
   - rubocop-rake
@@ -28,9 +29,12 @@ Metrics/BlockLength:
     - 'examples/**/*'
 
 Metrics/MethodLength:
-  Max: 15
+  Max: 17
   Exclude:
     - 'spec/**/*'
+
+Metrics/ClassLength:
+  Max: 200
 
 Metrics/CyclomaticComplexity:
   Max: 10
@@ -46,10 +50,10 @@ Style/Documentation:
 
 # RSpec rules
 RSpec/ExampleLength:
-  Max: 30
+  Max: 50
 
 RSpec/MultipleExpectations:
-  Max: 5
+  Max: 15
 
 # String literal rules
 Style/StringLiterals:

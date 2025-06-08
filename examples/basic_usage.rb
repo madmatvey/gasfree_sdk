@@ -1,6 +1,16 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+# GasFree SDK Basic Usage Example
+# ===============================
+# This example demonstrates the basic usage of the GasFree SDK with TRON testnet.
+#
+# Note: This demo uses placeholder TRON addresses and mock signatures for demonstration.
+# In a production application, you would need:
+# 1. Proper TRON key generation and address derivation
+# 2. Proper TRON transaction signing using TRON-specific libraries
+# 3. Real API credentials from GasFree.io
+
 require "bundler/setup"
 require "gasfree_sdk"
 require "eth"
@@ -9,7 +19,8 @@ require "eth"
 GasfreeSdk.configure do |config|
   config.api_key = ENV["GASFREE_API_KEY"] || "your-api-key"
   config.api_secret = ENV["GASFREE_API_SECRET"] || "your-api-secret"
-  config.api_endpoint = ENV["GASFREE_API_ENDPOINT"] || "https://open.gasfree.io/tron/"
+  # Use the correct endpoint from the error - this appears to be the TRON testnet (Nile) endpoint
+  config.api_endpoint = ENV["GASFREE_API_ENDPOINT"] || "https://open-test.gasfree.io/nile/"
 end
 
 # Check if we have real API credentials
@@ -40,15 +51,17 @@ providers.each do |provider|
   puts "    Default Deadline: #{provider.config.default_deadline_duration}s"
 end
 
-# Create a new key pair for testing
-key = Eth::Key.new
+# For TRON testnet, we need to use a TRON address format (starts with T)
+# Since we don't have a TRON-specific library, we'll use a valid TRON address for testing
+user_address = "TZ3oPnE1SdAUL1YRd9GJQHenxrXjy4paAn" # Valid TRON testnet address
 puts "\nTest Account:"
-puts "  Address: #{key.address}"
+puts "  TRON Address: #{user_address}"
+puts "  Note: Using a sample TRON address since API expects TRON format"
 
 # Get GasFree account info
 puts "\nGasFree Account Info:"
 begin
-  account = client.address(key.address)
+  account = client.address(user_address)
   puts "  GasFree Address: #{account.gas_free_address}"
   puts "  Active: #{account.active}"
   puts "  Nonce: #{account.nonce}"
@@ -70,8 +83,8 @@ begin
   message = {
     token: token.token_address,
     service_provider: provider.address,
-    user: key.address,
-    receiver: "0x1234567890123456789012345678901234567890",
+    user: user_address,
+    receiver: "TX554G9uKsEv1U6TBQnNPC7dkhbvBFhgrD",
     value: "1000000",
     max_fee: token.transfer_fee,
     deadline: Time.now.to_i + provider.config.default_deadline_duration,
@@ -80,7 +93,10 @@ begin
   }
 
   # Sign the message
-  sig = key.sign(Eth::Util.keccak256(message.to_json))
+  # Note: In a real TRON application, you would use TRON-specific signing
+  # For this demo, we'll use a mock signature since we don't have TRON signing libraries
+  # sig = key.sign(Eth::Util.keccak256(message.to_json))  # This was for Ethereum
+  sig = "0x#{"a" * 130}" # Mock signature for demo purposes
 
   # Create and submit transfer request
   request = GasfreeSdk::Models::TransferRequest.new(
@@ -96,13 +112,13 @@ begin
 
   # Monitor transfer status
   puts "\nMonitoring Transfer Status:"
-  5.times do
+  7.times do
     status = client.transfer_status(response.id)
     puts "  State: #{status.state}"
     puts "  Transaction Hash: #{status.txn_hash}" if status.txn_hash
     break if %w[SUCCEED FAILED].include?(status.state)
 
-    sleep 2
+    sleep 5
   end
 rescue GasfreeSdk::APIError => e
   puts "  Error (#{e.code}): #{e.message}"

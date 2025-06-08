@@ -13,6 +13,9 @@ require_relative "gasfree_sdk/types"
 require_relative "gasfree_sdk/client"
 require_relative "gasfree_sdk/errors"
 require_relative "gasfree_sdk/models"
+require_relative "gasfree_sdk/crypto"
+require_relative "gasfree_sdk/base58"
+require_relative "gasfree_sdk/tron_eip712_signer"
 
 # Main module for GasFree SDK
 module GasfreeSdk
