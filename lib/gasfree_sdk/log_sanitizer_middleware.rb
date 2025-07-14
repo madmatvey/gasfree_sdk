@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative "log_sanitizer"
 
 module GasfreeSdk
@@ -9,7 +11,7 @@ module GasfreeSdk
       @sanitizer = sanitizer
     end
 
-    def call(env)
+    def call(env) # rubocop:disable Metrics/AbcSize
       # Sanitize request headers only (body may be modified by other middleware)
       env[:request_headers] = sanitizer.call(env[:request_headers]) if env[:request_headers]
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module GasfreeSdk
   # Class for masking sensitive data in logs
   # Recursively replaces values of sensitive fields with a mask

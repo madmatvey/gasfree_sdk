@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "spec_helper"
 require "gasfree_sdk/log_sanitizer_middleware"
 require "faraday"
