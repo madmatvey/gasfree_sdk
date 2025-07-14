@@ -1,5 +1,5 @@
 # Структура проекта и зависимости кода
-_Exported on 15.07.2025 at 0:14:36 GMT+3 from Cursor (1.2.4)_
+_Exported on 15.07.2025 at 0:29:03 GMT+3 from Cursor (1.2.4)_
 
 ---
 
@@ -429,4 +429,669 @@ SENSITIVE_FIELDS = %w[
   auth_token authToken session_token sessionToken access_token accessToken
 ]
 ```
+
+---
+
+**User**
+
+Отлично. Переходим к пункту:
+3. Реализовать универсальную функцию маскирования чувствительных данных.
+
+---
+
+**Cursor**
+
+Вот основные требования к функции маскирования:
+
+- Работает с Hash, Array, String (и вложенными структурами).
+- Маскирует значения по ключам из списка чувствительных полей (без учёта регистра).
+- Маскирует как заголовки, так и тело запроса/ответа.
+- Не изменяет оригинальные данные (работает с копией).
+- Маскирует все вхождения, даже во вложенных структурах.
+
+### Предлагаемое место для функции
+Лучше всего вынести функцию в отдельный файл, например, `lib/gasfree_sdk/masking.rb`, чтобы её можно было переиспользовать.
+
+---
+
+### Пример функции (Ruby)
+
+```ruby
+# lib/gasfree_sdk/masking.rb
+
+module GasfreeSdk
+  module Masking
+    SENSITIVE_FIELDS = %w[
+      authorization api-key apikey x-api-key x-access-token access-token token secret x-secret x-api-secret
+      private_key privateKey api_secret apiSecret signature sig raw_signature rawSignature password mnemonic seed
+      auth_token authToken session_token sessionToken access_token accessToken
+    ].freeze
+
+    MASK = "***REDACTED***"
+
+    def self.mask_sensitive_data(obj)
+      case obj
+      when Hash
+        obj.each_with_object({}) do |(k, v), h|
+          if sensitive_key?(k)
+            h[k] = MASK
+          else
+            h[k] = mask_sensitive_data(v)
+          end
+        end
+      when Array
+        obj.map { |v| mask_sensitive_data(v) }
+      else
+        obj
+      end
+    end
+
+    def self.sensitive_key?(key)
+      SENSITIVE_FIELDS.any? { |field| key.to_s.downcase.include?(field.downcase) }
+    end
+  end
+end
+```
+
+---
+
+**Следующий шаг:**  
+Я создам файл `lib/gasfree_sdk/masking.rb` и добавлю туда универсальную функцию маскирования, как выше. После этого можно будет интегрировать её в логирование.
+
+```ruby
+# lib/gasfree_sdk/masking.rb
+
+module GasfreeSdk
+  module Masking
+    SENSITIVE_FIELDS = %w[
+      authorization api-key apikey x-api-key x-access-token access-token token secret x-secret x-api-secret
+      private_key privateKey api_secret apiSecret signature sig raw_signature rawSignature password mnemonic seed
+      auth_token authToken session_token sessionToken access_token accessToken
+    ].freeze
+
+    MASK = "***REDACTED***"
+
+    def self.mask_sensitive_data(obj)
+      case obj
+      when Hash
+        obj.each_with_object({}) do |(k, v), h|
+          if sensitive_key?(k)
+            h[k] = MASK
+          else
+            h[k] = mask_sensitive_data(v)
+          end
+        end
+      when Array
+        obj.map { |v| mask_sensitive_data(v) }
+      else
+        obj
+      end
+    end
+
+    def self.sensitive_key?(key)
+      SENSITIVE_FIELDS.any? { |field| key.to_s.downcase.include?(field.downcase) }
+    end
+  end
+end
+```
+
+```ruby
+module GasfreeSdk
+  module Masking
+    SENSITIVE_FIELDS = %w[
+      authorization api-key apikey x-api-key x-access-token access-token token secret x-secret x-api-secret
+      private_key privateKey api_secret apiSecret signature sig raw_signature rawSignature password mnemonic seed
+      auth_token authToken session_token sessionToken access_token accessToken
+    ].freeze
+
+    MASK = "***REDACTED***"
+
+    def self.mask_sensitive_data(obj)
+      case obj
+      when Hash
+        obj.each_with_object({}) do |(k, v), h|
+          if sensitive_key?(k)
+            h[k] = MASK
+          else
+            h[k] = mask_sensitive_data(v)
+          end
+        end
+      when Array
+        obj.map { |v| mask_sensitive_data(v) }
+      else
+        obj
+      end
+    end
+
+    def self.sensitive_key?(key)
+      SENSITIVE_FIELDS.any? { |field| key.to_s.downcase.include?(field.downcase) }
+    end
+  end
+end
+
+```
+
+Универсальная функция маскирования чувствительных данных реализована в файле `lib/gasfree_sdk/masking.rb`.
+
+**Следующий шаг:**  
+Можно переходить к интеграции этой функции в процесс логирования (Faraday middleware), чтобы все логи проходили через маскирование перед выводом. Если хотите, могу также добавить тесты для функции маскирования — дайте знать, как двигаемся дальше!
+
+---
+
+**User**
+
+Давай сделаем более ООП подход. 
+Чтобы класс инициализировался, а список чувствительных полей передавался как зависимость в именованном параметре. При этом по дефолту давай использовать значение из константы.
+Вместо `mask_sensitive_data` давай назовем основной метод `call`.
+И должен ли быть метод sensitive_key? публичным?
+
+---
+
+**Cursor**
+
+Отличные замечания! Вот как можно улучшить ООП-структуру:
+
+### ООП-подход
+
+- Сделаем класс `Masking`, который инициализируется с опциональным списком чувствительных полей.
+- По умолчанию используется список из константы.
+- Основной публичный метод — `call`.
+- Метод `sensitive_key?` должен быть приватным, так как это внутренняя логика (он не нужен пользователю класса напрямую).
+
+---
+
+### Пример интерфейса
+
+```ruby
+masker = GasfreeSdk::Masking.new
+masked = masker.call(data)
+
+# или с кастомным списком:
+masker = GasfreeSdk::Masking.new(sensitive_fields: %w[my_secret my_token])
+masked = masker.call(data)
+```
+
+---
+
+### Новый вариант класса
+
+```ruby
+module GasfreeSdk
+  class Masking
+    DEFAULT_SENSITIVE_FIELDS = %w[
+      authorization api-key apikey x-api-key x-access-token access-token token secret x-secret x-api-secret
+      private_key privateKey api_secret apiSecret signature sig raw_signature rawSignature password mnemonic seed
+      auth_token authToken session_token sessionToken access_token accessToken
+    ].freeze
+
+    MASK = "***REDACTED***"
+
+    def initialize(sensitive_fields: DEFAULT_SENSITIVE_FIELDS)
+      @sensitive_fields = sensitive_fields
+    end
+
+    def call(obj)
+      case obj
+      when Hash
+        obj.each_with_object({}) do |(k, v), h|
+          if sensitive_key?(k)
+            h[k] = MASK
+          else
+            h[k] = call(v)
+          end
+        end
+      when Array
+        obj.map { |v| call(v) }
+      else
+        obj
+      end
+    end
+
+    private
+
+    def sensitive_key?(key)
+      @sensitive_fields.any? { |field| key.to_s.downcase.include?(field.downcase) }
+    end
+  end
+end
+```
+
+---
+
+**Резюме по вопросам:**
+- Да, метод `sensitive_key?` должен быть приватным.
+- Основной публичный метод — `call`.
+- Список чувствительных полей — через параметр конструктора, по умолчанию — дефолтный список.
+
+---
+
+Готов внести эти изменения в файл `lib/gasfree_sdk/masking.rb`. Приступаю!
+
+```ruby
+masker = GasfreeSdk::Masking.new
+masked = masker.call(data)
+
+# или с кастомным списком:
+masker = GasfreeSdk::Masking.new(sensitive_fields: %w[my_secret my_token])
+masked = masker.call(data)
+```
+
+```ruby
+module GasfreeSdk
+  class Masking
+    DEFAULT_SENSITIVE_FIELDS = %w[
+      authorization api-key apikey x-api-key x-access-token access-token token secret x-secret x-api-secret
+      private_key privateKey api_secret apiSecret signature sig raw_signature rawSignature password mnemonic seed
+      auth_token authToken session_token sessionToken access_token accessToken
+    ].freeze
+
+    MASK = "***REDACTED***"
+
+    def initialize(sensitive_fields: DEFAULT_SENSITIVE_FIELDS)
+      @sensitive_fields = sensitive_fields
+    end
+
+    def call(obj)
+      case obj
+      when Hash
+        obj.each_with_object({}) do |(k, v), h|
+          if sensitive_key?(k)
+            h[k] = MASK
+          else
+            h[k] = call(v)
+          end
+        end
+      when Array
+        obj.map { |v| call(v) }
+      else
+        obj
+      end
+    end
+
+    private
+
+    def sensitive_key?(key)
+      @sensitive_fields.any? { |field| key.to_s.downcase.include?(field.downcase) }
+    end
+  end
+end
+```
+
+```ruby
+module GasfreeSdk
+  class Masking
+    DEFAULT_SENSITIVE_FIELDS = %w[
+      authorization api-key apikey x-api-key x-access-token access-token token secret x-secret x-api-secret
+      private_key privateKey api_secret apiSecret signature sig raw_signature rawSignature password mnemonic seed
+      auth_token authToken session_token sessionToken access_token accessToken
+    ].freeze
+
+    MASK = "***REDACTED***"
+
+    def initialize(sensitive_fields: DEFAULT_SENSITIVE_FIELDS)
+      @sensitive_fields = sensitive_fields
+    end
+
+    def call(obj)
+      case obj
+      when Hash
+        obj.each_with_object({}) do |(k, v), h|
+          if sensitive_key?(k)
+            h[k] = MASK
+          else
+            h[k] = call(v)
+          end
+        end
+      when Array
+        obj.map { |v| call(v) }
+      else
+        obj
+      end
+    end
+
+    private
+
+    def sensitive_key?(key)
+      @sensitive_fields.any? { |field| key.to_s.downcase.include?(field.downcase) }
+    end
+  end
+end
+
+```
+
+Класс `GasfreeSdk::Masking` теперь реализован в ООП-стиле:
+
+- Список чувствительных полей передаётся через конструктор (по умолчанию — стандартный список).
+- Основной публичный метод — `call`.
+- Метод `sensitive_key?` сделан приватным.
+
+Если нужно — могу добавить тесты для этого класса или приступить к интеграции в логирование!
+
+---
+
+**User**
+
+Давай назовем его LogSanitizer
+
+---
+
+**Cursor**
+
+```ruby
+module GasfreeSdk
+  class LogSanitizer
+    DEFAULT_SENSITIVE_FIELDS = %w[
+      authorization api-key apikey x-api-key x-access-token access-token token secret x-secret x-api-secret
+      private_key privateKey api_secret apiSecret signature sig raw_signature rawSignature password mnemonic seed
+      auth_token authToken session_token sessionToken access_token accessToken
+    ].freeze
+
+    MASK = "***REDACTED***"
+
+    def initialize(sensitive_fields: DEFAULT_SENSITIVE_FIELDS)
+      @sensitive_fields = sensitive_fields
+    end
+
+    def call(obj)
+      case obj
+      when Hash
+        obj.each_with_object({}) do |(k, v), h|
+          if sensitive_key?(k)
+            h[k] = MASK
+          else
+            h[k] = call(v)
+          end
+        end
+      when Array
+        obj.map { |v| call(v) }
+      else
+        obj
+      end
+    end
+
+    private
+
+    def sensitive_key?(key)
+      @sensitive_fields.any? { |field| key.to_s.downcase.include?(field.downcase) }
+    end
+  end
+end
+
+```
+
+Класс теперь называется `GasfreeSdk::LogSanitizer`. Все внутренние упоминания также обновлены.
+
+Готов к следующему шагу: интеграция в логирование или написание тестов — уточните, как двигаемся дальше!
+
+---
+
+**User**
+
+Добавь yard комменты
+
+---
+
+**Cursor**
+
+```ruby
+module GasfreeSdk
+  # Класс для маскирования чувствительных данных в логах
+  # Позволяет рекурсивно заменять значения чувствительных полей на маску
+  class LogSanitizer
+    # Список чувствительных полей по умолчанию
+    DEFAULT_SENSITIVE_FIELDS = %w[
+      authorization api-key apikey x-api-key x-access-token access-token token secret x-secret x-api-secret
+      private_key privateKey api_secret apiSecret signature sig raw_signature rawSignature password mnemonic seed
+      auth_token authToken session_token sessionToken access_token accessToken
+    ].freeze
+
+    # Значение, на которое заменяются чувствительные данные
+    MASK = "***REDACTED***"
+
+    # @param sensitive_fields [Array<String>] список чувствительных полей (по умолчанию DEFAULT_SENSITIVE_FIELDS)
+    def initialize(sensitive_fields: DEFAULT_SENSITIVE_FIELDS)
+      @sensitive_fields = sensitive_fields
+    end
+
+    # Рекурсивно маскирует значения чувствительных полей в переданном объекте
+    # @param obj [Hash, Array, Object] объект для маскирования
+    # @return [Hash, Array, Object] объект с замаскированными чувствительными данными
+    def call(obj)
+      case obj
+      when Hash
+        obj.each_with_object({}) do |(k, v), h|
+          if sensitive_key?(k)
+            h[k] = MASK
+          else
+            h[k] = call(v)
+          end
+        end
+      when Array
+        obj.map { |v| call(v) }
+      else
+        obj
+      end
+    end
+
+    private
+
+    # Проверяет, является ли ключ чувствительным
+    # @param key [String, Symbol]
+    # @return [Boolean]
+    def sensitive_key?(key)
+      @sensitive_fields.any? { |field| key.to_s.downcase.include?(field.downcase) }
+    end
+  end
+end
+
+```
+
+YARD-комментарии добавлены к классу `LogSanitizer`, его конструктору, публичному методу `call` и приватному методу `sensitive_key?`.
+
+Если нужно — могу добавить тесты для этого класса или приступить к интеграции в логирование!
+
+---
+
+**User**
+
+Используй английский.
+
+---
+
+**Cursor**
+
+```ruby
+module GasfreeSdk
+  # Class for masking sensitive data in logs
+  # Recursively replaces values of sensitive fields with a mask
+  class LogSanitizer
+    # Default list of sensitive fields
+    DEFAULT_SENSITIVE_FIELDS = %w[
+      authorization api-key apikey x-api-key x-access-token access-token token secret x-secret x-api-secret
+      private_key privateKey api_secret apiSecret signature sig raw_signature rawSignature password mnemonic seed
+      auth_token authToken session_token sessionToken access_token accessToken
+    ].freeze
+
+    # Value to replace sensitive data with
+    MASK = "***REDACTED***"
+
+    # @param sensitive_fields [Array<String>] List of sensitive fields (defaults to DEFAULT_SENSITIVE_FIELDS)
+    def initialize(sensitive_fields: DEFAULT_SENSITIVE_FIELDS)
+      @sensitive_fields = sensitive_fields
+    end
+
+    # Recursively masks values of sensitive fields in the given object
+    # @param obj [Hash, Array, Object] Object to sanitize
+    # @return [Hash, Array, Object] Object with sensitive data masked
+    def call(obj)
+      case obj
+      when Hash
+        obj.each_with_object({}) do |(k, v), h|
+          if sensitive_key?(k)
+            h[k] = MASK
+          else
+            h[k] = call(v)
+          end
+        end
+      when Array
+        obj.map { |v| call(v) }
+      else
+        obj
+      end
+    end
+
+    private
+
+    # Checks if the key is sensitive
+    # @param key [String, Symbol]
+    # @return [Boolean]
+    def sensitive_key?(key)
+      @sensitive_fields.any? { |field| key.to_s.downcase.include?(field.downcase) }
+    end
+  end
+end
+
+```
+
+All YARD comments in the `LogSanitizer` class are now in English.
+
+Ready for the next step: integration into logging, or adding tests—just let me know your preference!
+
+---
+
+**User**
+
+Давай mask тоже выделим в зависимости, с дефолтным значением из константы
+
+---
+
+**Cursor**
+
+```ruby
+module GasfreeSdk
+  # Class for masking sensitive data in logs
+  # Recursively replaces values of sensitive fields with a mask
+  class LogSanitizer
+    # Default list of sensitive fields
+    DEFAULT_SENSITIVE_FIELDS = %w[
+      authorization api-key apikey x-api-key x-access-token access-token token secret x-secret x-api-secret
+      private_key privateKey api_secret apiSecret signature sig raw_signature rawSignature password mnemonic seed
+      auth_token authToken session_token sessionToken access_token accessToken
+    ].freeze
+
+    # Default value to replace sensitive data with
+    DEFAULT_MASK = "***REDACTED***"
+
+    # @param sensitive_fields [Array<String>] List of sensitive fields (defaults to DEFAULT_SENSITIVE_FIELDS)
+    # @param mask [String] Value to replace sensitive data with (defaults to DEFAULT_MASK)
+    def initialize(sensitive_fields: DEFAULT_SENSITIVE_FIELDS, mask: DEFAULT_MASK)
+      @sensitive_fields = sensitive_fields
+      @mask = mask
+    end
+
+    # Recursively masks values of sensitive fields in the given object
+    # @param obj [Hash, Array, Object] Object to sanitize
+    # @return [Hash, Array, Object] Object with sensitive data masked
+    def call(obj)
+      case obj
+      when Hash
+        obj.each_with_object({}) do |(k, v), h|
+          if sensitive_key?(k)
+            h[k] = @mask
+          else
+            h[k] = call(v)
+          end
+        end
+      when Array
+        obj.map { |v| call(v) }
+      else
+        obj
+      end
+    end
+
+    private
+
+    # Checks if the key is sensitive
+    # @param key [String, Symbol]
+    # @return [Boolean]
+    def sensitive_key?(key)
+      @sensitive_fields.any? { |field| key.to_s.downcase.include?(field.downcase) }
+    end
+  end
+end
+
+```
+
+The mask value is now an injectable dependency via the constructor (with a default from the `DEFAULT_MASK` constant). All relevant code and YARD comments have been updated accordingly.
+
+You can now customize both the sensitive fields and the mask string when initializing `LogSanitizer`. Ready for the next step!
+
+---
+
+**User**
+
+переименуй файл чтобы соответствовало названию
+
+---
+
+**Cursor**
+
+```ruby
+module GasfreeSdk
+  # Class for masking sensitive data in logs
+  # Recursively replaces values of sensitive fields with a mask
+  class LogSanitizer
+    # Default list of sensitive fields
+    DEFAULT_SENSITIVE_FIELDS = %w[
+      authorization api-key apikey x-api-key x-access-token access-token token secret x-secret x-api-secret
+      private_key privateKey api_secret apiSecret signature sig raw_signature rawSignature password mnemonic seed
+      auth_token authToken session_token sessionToken access_token accessToken
+    ].freeze
+
+    # Default value to replace sensitive data with
+    DEFAULT_MASK = "***REDACTED***"
+
+    # @param sensitive_fields [Array<String>] List of sensitive fields (defaults to DEFAULT_SENSITIVE_FIELDS)
+    # @param mask [String] Value to replace sensitive data with (defaults to DEFAULT_MASK)
+    def initialize(sensitive_fields: DEFAULT_SENSITIVE_FIELDS, mask: DEFAULT_MASK)
+      @sensitive_fields = sensitive_fields
+      @mask = mask
+    end
+
+    # Recursively masks values of sensitive fields in the given object
+    # @param obj [Hash, Array, Object] Object to sanitize
+    # @return [Hash, Array, Object] Object with sensitive data masked
+    def call(obj)
+      case obj
+      when Hash
+        obj.each_with_object({}) do |(k, v), h|
+          if sensitive_key?(k)
+            h[k] = @mask
+          else
+            h[k] = call(v)
+          end
+        end
+      when Array
+        obj.map { |v| call(v) }
+      else
+        obj
+      end
+    end
+
+    private
+
+    # Checks if the key is sensitive
+    # @param key [String, Symbol]
+    # @return [Boolean]
+    def sensitive_key?(key)
+      @sensitive_fields.any? { |field| key.to_s.downcase.include?(field.downcase) }
+    end
+  end
+end
+
+```
+
+Файл переименован: теперь класс `LogSanitizer` находится в `lib/gasfree_sdk/log_sanitizer.rb` и полностью соответствует своему названию.
+
+Готов к следующему шагу!
 
