@@ -121,8 +121,8 @@ mainnet_signature = GasfreeSdk::TronEIP712Signer.sign_typed_data_mainnet(private
 
 # Generic signing with custom domain
 signature = GasfreeSdk::TronEIP712Signer.sign_typed_data(
-  private_key, 
-  message_data, 
+  private_key,
+  message_data,
   domain: GasfreeSdk::TronEIP712Signer::DOMAIN_TESTNET
 )
 ```
@@ -179,7 +179,7 @@ The module provides pre-configured domain constants for both networks:
 GasfreeSdk::TronEIP712Signer::DOMAIN_TESTNET
 # => {
 #   name: "GasFreeController",
-#   version: "V1.0.0", 
+#   version: "V1.0.0",
 #   chainId: 728_126_428,
 #   verifyingContract: "THQGuFzL87ZqhxkgqYEryRAd7gqFqL5rdc"
 # }
@@ -245,10 +245,40 @@ loop do
   status = client.transfer_status(transfer_id)
   puts "State: #{status.state}"
   puts "Transaction Hash: #{status.txn_hash}" if status.txn_hash
-  
+
   break if %w[SUCCEED FAILED].include?(status.state)
   sleep 2
 end
+```
+
+## Debugging and Logging
+
+The SDK automatically masks sensitive data in debug logs to prevent security leaks.
+
+### Enable Debug Logging
+
+```bash
+export DEBUG_GASFREE_SDK=1
+```
+
+### Automatic Data Protection
+
+When debug logging is enabled, sensitive fields (private keys, tokens, signatures, etc.) are automatically masked with `***REDACTED***` in all HTTP request/response logs.
+
+**Protected fields include:**
+- Headers: `Authorization`, `Api-Key`, `X-Api-Key`, etc.
+- Body fields: `private_key`, `api_secret`, `signature`, `token`, etc.
+
+### Example
+
+```ruby
+# With DEBUG_GASFREE_SDK=1
+client = GasfreeSdk.client
+tokens = client.tokens
+
+# Console output (sensitive data automatically masked):
+# GET https://open.gasfree.io/tron/api/v1/config/token/all
+# Request Headers: {"Authorization"=>"***REDACTED***", "Timestamp"=>"1703123456"}
 ```
 
 ## Error Handling
@@ -258,7 +288,7 @@ begin
   response = client.submit_transfer(request)
 rescue GasfreeSdk::APIError => e
   puts "API Error (#{e.code}): #{e.message}"
-  
+
   case e.message
   when /insufficient balance/
     puts "Solution: Get test tokens or transfer tokens to GasFree address"

@@ -1,5 +1,5 @@
 # Структура проекта и зависимости кода
-_Exported on 15.07.2025 at 0:56:22 GMT+3 from Cursor (1.2.4)_
+_Exported on 15.07.2025 at 1:03:34 GMT+3 from Cursor (1.2.4)_
 
 ---
 
@@ -2652,4 +2652,274 @@ end
 
 Теперь запустим тесты, чтобы убедиться, что разбивка работает корректно:
 
+
+---
+
+**User**
+
+Отлично! давай перейдем к следующему пункту
+6. Обновить документацию (при необходимости).
+
+---
+
+**Cursor**
+
+В README.md нет раздела о логировании или отладке. Нужно добавить информацию о новой функциональности маскирования чувствительных данных. Добавлю раздел "Debugging and Logging":
+
+
+```markdown
+end
+```
+
+## Debugging and Logging
+
+The SDK includes built-in logging capabilities for debugging HTTP requests and responses. When enabled, all sensitive data (private keys, tokens, signatures, etc.) is automatically masked to prevent security leaks.
+
+### Enable Debug Logging
+
+Set the `DEBUG_GASFREE_SDK` environment variable to enable detailed logging:
+
+```bash
+export DEBUG_GASFREE_SDK=1
+```
+
+Or in your Ruby code:
+
+```ruby
+ENV["DEBUG_GASFREE_SDK"] = "1"
+```
+
+### What Gets Logged
+
+When debug logging is enabled, the SDK will log:
+
+- **HTTP Requests**: Method, URL, headers, and body
+- **HTTP Responses**: Status code, headers, and body
+- **All sensitive data is automatically masked** with `***REDACTED***`
+
+### Sensitive Data Protection
+
+The following fields are automatically masked in logs:
+
+- **Headers**: `Authorization`, `Api-Key`, `X-Api-Key`, `X-Access-Token`, etc.
+- **Body Fields**: `private_key`, `api_secret`, `signature`, `sig`, `token`, `password`, etc.
+
+### Example Debug Output
+
+```ruby
+# With DEBUG_GASFREE_SDK=1
+client = GasfreeSdk.client
+tokens = client.tokens
+
+# Console output (sensitive data masked):
+# GET https://open.gasfree.io/tron/api/v1/config/token/all
+# Request Headers: {"Authorization"=>"***REDACTED***", "Timestamp"=>"1703123456"}
+# Response Status: 200
+# Response Body: {"code"=>200, "data"=>{"tokens"=>[...]}}
+```
+
+### Custom Log Sanitization
+
+You can customize the sanitization behavior by creating your own `LogSanitizer` instance:
+
+```ruby
+require 'gasfree_sdk/log_sanitizer'
+
+# Custom sensitive fields and mask
+sanitizer = GasfreeSdk::LogSanitizer.new(
+  sensitive_fields: ['custom_secret', 'my_token'],
+  mask: '[HIDDEN]'
+)
+
+# Use in your own logging
+data = { 'custom_secret' => 'secret_value', 'normal' => 'visible' }
+sanitized = sanitizer.call(data)
+# => { 'custom_secret' => '[HIDDEN]', 'normal' => 'visible' }
+```
+
+## Error Handling
+```
+
+Отлично! Документация обновлена. Теперь в README.md есть подробный раздел "Debugging and Logging", который объясняет:
+
+1. **Как включить отладочное логирование** через переменную окружения `DEBUG_GASFREE_SDK`
+2. **Что логируется** - HTTP запросы и ответы
+3. **Защиту чувствительных данных** - автоматическое маскирование
+4. **Пример вывода** с замаскированными данными
+5. **Кастомизацию санитизации** - как использовать `LogSanitizer` самостоятельно
+
+Это поможет пользователям SDK понять:
+- Как безопасно отлаживать свои приложения
+- Что чувствительные данные автоматически защищены
+- Как настроить собственное маскирование при необходимости
+
+Документация теперь полностью покрывает новую функциональность маскирования чувствительных данных!
+
+---
+
+**User**
+
+Давай в README.md сделаем информацию покороче - и пусть она касается преимущественно добавленной функции маскирования. Плюс давай обновим changelog.md. А также думаю версия гема должна обновиться до 1.1.0 (или 1.0.1?)
+
+---
+
+**Cursor**
+
+```markdown
+## Debugging and Logging
+
+The SDK automatically masks sensitive data in debug logs to prevent security leaks.
+
+### Enable Debug Logging
+
+```bash
+export DEBUG_GASFREE_SDK=1
+```
+
+### Automatic Data Protection
+
+When debug logging is enabled, sensitive fields (private keys, tokens, signatures, etc.) are automatically masked with `***REDACTED***` in all HTTP request/response logs.
+
+**Protected fields include:**
+- Headers: `Authorization`, `Api-Key`, `X-Api-Key`, etc.
+- Body fields: `private_key`, `api_secret`, `signature`, `token`, etc.
+
+### Example
+
+```ruby
+# With DEBUG_GASFREE_SDK=1
+client = GasfreeSdk.client
+tokens = client.tokens
+
+# Console output (sensitive data automatically masked):
+# GET https://open.gasfree.io/tron/api/v1/config/token/all
+# Request Headers: {"Authorization"=>"***REDACTED***", "Timestamp"=>"1703123456"}
+```
+```
+
+```markdown
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.1.0] - 2025-01-XX
+
+### Added
+- **LogSanitizer**: Automatic masking of sensitive data in debug logs
+  - Recursive sanitization of HTTP request/response data
+  - Protection of private keys, tokens, signatures, and other sensitive fields
+  - Customizable sensitive field detection and masking patterns
+  - Support for nested data structures (Hash, Array, primitive types)
+
+- **LogSanitizerMiddleware**: Faraday middleware for automatic log sanitization
+  - Integrated with existing debug logging (`DEBUG_GASFREE_SDK=1`)
+  - Masks sensitive data before logging to prevent security leaks
+  - Handles both request and response data sanitization
+
+### Security
+- **Automatic Data Protection**: Sensitive fields are now automatically masked in debug logs
+  - Headers: `Authorization`, `Api-Key`, `X-Api-Key`, etc.
+  - Body fields: `private_key`, `api_secret`, `signature`, `token`, etc.
+  - Prevents accidental exposure of credentials in log files
+
+### Features
+- `GasfreeSdk::LogSanitizer` - Universal data sanitization utility
+- `GasfreeSdk::LogSanitizerMiddleware` - Faraday middleware for automatic sanitization
+- Environment variable `DEBUG_GASFREE_SDK=1` now includes automatic data protection
+
+### Documentation
+- Added "Debugging and Logging" section to README.md
+- Documented automatic sensitive data protection features
+- Added usage examples for debug logging
+
+### Testing
+- Comprehensive test coverage for LogSanitizer functionality
+- Tests for various data types (Hash, Array, primitives)
+- Middleware integration tests
+- Edge case coverage for nested structures
+
+## [1.0.0] - 2025-06-08
+```
+
+```ruby
+# frozen_string_literal: true
+
+module GasfreeSdk
+  VERSION = "1.1.0"
+end
+```
+
+Отлично! Обновления выполнены:
+
+## ✅ Изменения в README.md
+- **Сокращен раздел** "Debugging and Logging" - убраны лишние детали
+- **Фокус на маскировании** - основная информация о защите чувствительных данных
+- **Простой пример** - показано, как работает автоматическое маскирование
+
+## ✅ Обновлен CHANGELOG.md
+- **Версия 1.1.0** - добавлена новая запись с подробным описанием изменений
+- **Структурированное описание** - разделы Added, Security, Features, Documentation, Testing
+- **Акцент на безопасности** - выделен отдельный раздел Security
+
+## ✅ Обновлена версия гема
+- **1.0.0 → 1.1.0** - соответствует semantic versioning (minor version для новой функциональности)
+
+**Обоснование версии 1.1.0:**
+- Добавлена новая функциональность (маскирование) без breaking changes
+- Улучшена безопасность (автоматическая защита чувствительных данных)
+- Обратная совместимость сохранена
+
+Все изменения готовы для релиза! 🎉
+
+---
+
+**User**
+
+Про Testing убери из changelog
+
+---
+
+**Cursor**
+
+```markdown
+### Documentation
+- Added "Debugging and Logging" section to README.md
+- Documented automatic sensitive data protection features
+- Added usage examples for debug logging
+
+## [1.0.0] - 2025-06-08
+```
+
+Готово! Раздел Testing убран из CHANGELOG.md. Теперь changelog содержит только основные изменения: Added, Security, Features и Documentation.
+
+---
+
+**User**
+
+Молодчик!
+
+---
+
+**Cursor**
+
+Спасибо! �� 
+
+Мы успешно реализовали полное решение для проблемы с утечкой чувствительных данных в логах:
+
+## 🎯 Что было сделано:
+
+✅ **Анализ проблемы** - нашли все места логирования  
+✅ **Создали LogSanitizer** - универсальный класс для маскирования  
+✅ **Интегрировали LogSanitizerMiddleware** - автоматическая защита в Faraday  
+✅ **Написали тесты** - полное покрытие всех сценариев  
+✅ **Обновили документацию** - краткое и понятное описание  
+✅ **Подготовили релиз** - версия 1.1.0 с changelog  
+
+## 🔒 Результат:
+Теперь при включенном `DEBUG_GASFREE_SDK=1` все приватные ключи, токены, подписи и другие секреты автоматически маскируются в логах, что предотвращает утечку чувствительных данных.
+
+Отличная работа в команде! 🚀
 
