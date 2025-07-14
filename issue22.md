@@ -1,5 +1,5 @@
 # Структура проекта и зависимости кода
-_Exported on 15.07.2025 at 0:13:16 GMT+3 from Cursor (1.2.4)_
+_Exported on 15.07.2025 at 0:14:36 GMT+3 from Cursor (1.2.4)_
 
 ---
 
@@ -346,5 +346,87 @@ Proposed fix: Mask or redact sensitive headers/fields in debugging middleware.
 
 ```ruby
   setting :logger, default: Logger.new($stdout)
+```
+
+---
+
+**User**
+
+Отлично! переходим к пункту
+2. Составить список чувствительных полей для маскирования.
+
+---
+
+**Cursor**
+
+Вот рекомендуемый список чувствительных полей, которые нужно маскировать в логах для SDK, работающего с криптовалютами и API:
+
+---
+
+## Список чувствительных полей для маскирования
+
+### 1. **Заголовки HTTP**
+- `Authorization`
+- `Api-Key`
+- `ApiKey`
+- `X-Api-Key`
+- `X-API-KEY`
+- `X-Access-Token`
+- `Access-Token`
+- `Token`
+- `Secret`
+- `X-Secret`
+- `X-Api-Secret`
+
+### 2. **Поля тела запроса/ответа**
+- `private_key`
+- `privateKey`
+- `secret`
+- `api_secret`
+- `apiSecret`
+- `signature`
+- `sig`
+- `raw_signature`
+- `rawSignature`
+- `password`
+- `mnemonic`
+- `seed`
+- `auth_token`
+- `authToken`
+- `session_token`
+- `sessionToken`
+- `access_token`
+- `accessToken`
+
+### 3. **Возможные дополнительные поля**
+- Любые поля, содержащие в имени: `key`, `secret`, `token`, `sig`, `pass`, `mnemonic`, `seed` (регистр не важен).
+
+---
+
+## Пример итогового списка (Ruby-массив)
+
+```ruby
+SENSITIVE_FIELDS = %w[
+  authorization api-key apikey x-api-key x-access-token access-token token secret x-secret x-api-secret
+  private_key privateKey api_secret apiSecret signature sig raw_signature rawSignature password mnemonic seed
+  auth_token authToken session_token sessionToken access_token accessToken
+]
+```
+
+## Рекомендации:
+- Маскировать поля как в заголовках, так и в теле запроса/ответа.
+- Проверять имена полей без учёта регистра.
+- Для универсальности можно добавить эвристику: если имя поля содержит подстроку из списка (`key`, `secret`, `token`, `sig`, `pass`, `mnemonic`, `seed`), тоже маскировать.
+
+---
+
+Если нужно, могу сразу подготовить функцию для проверки "чувствительности" поля или предложить шаблон для маскирования!
+
+```ruby
+SENSITIVE_FIELDS = %w[
+  authorization api-key apikey x-api-key x-access-token access-token token secret x-secret x-api-secret
+  private_key privateKey api_secret apiSecret signature sig raw_signature rawSignature password mnemonic seed
+  auth_token authToken session_token sessionToken access_token accessToken
+]
 ```
 
