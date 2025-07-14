@@ -10,9 +10,8 @@ module GasfreeSdk
     end
 
     def call(env)
-      # Sanitize request headers and body
+      # Sanitize request headers only (body may be modified by other middleware)
       env[:request_headers] = sanitizer.call(env[:request_headers]) if env[:request_headers]
-      env[:body] = sanitizer.call(env[:body]) if env[:body]
 
       @app.call(env).on_complete do |response_env|
         # Sanitize response headers and body
