@@ -1,5 +1,5 @@
 # Структура проекта и зависимости кода
-_Exported on 15.07.2025 at 0:29:03 GMT+3 from Cursor (1.2.4)_
+_Exported on 15.07.2025 at 0:33:52 GMT+3 from Cursor (1.2.4)_
 
 ---
 
@@ -1094,4 +1094,172 @@ end
 Файл переименован: теперь класс `LogSanitizer` находится в `lib/gasfree_sdk/log_sanitizer.rb` и полностью соответствует своему названию.
 
 Готов к следующему шагу!
+
+---
+
+**User**
+
+Отлично! давай перейдем к следующему шагу
+4. Внедрить маскирование в middleware/логгер.
+
+---
+
+**Cursor**
+
+```ruby
+require_relative "log_sanitizer"
+
+module GasfreeSdk
+  # Faraday middleware for sanitizing sensitive data before logging
+  class LogSanitizerMiddleware < Faraday::Middleware
+    def initialize(app, sanitizer: LogSanitizer.new)
+      super(app)
+      @sanitizer = sanitizer
+    end
+
+    def call(env)
+      # Sanitize request headers and body
+      env[:request_headers] = @sanitizer.call(env[:request_headers]) if env[:request_headers]
+      env[:body] = @sanitizer.call(env[:body]) if env[:body]
+
+      @app.call(env).on_complete do |response_env|
+        # Sanitize response headers and body
+        response_env[:response_headers] = @sanitizer.call(response_env[:response_headers]) if response_env[:response_headers]
+        response_env[:body] = @sanitizer.call(response_env[:body]) if response_env[:body]
+      end
+    end
+  end
+end
+
+```
+
+```ruby
+# frozen_string_literal: true
+
+require "base64"
+require "openssl"
+require "time"
+require "uri"
+require_relative "log_sanitizer_middleware"
+
+module GasfreeSdk
+  # Client for interacting with the GasFree API
+  class Client
+    # @return [Faraday::Connection] The HTTP client
+    attr_reader :connection
+
+    # Initialize a new GasFree client
+    def initialize
+      @connection = Faraday.new(url: GasfreeSdk.config.api_endpoint) do |f|
+        f.request :json
+        f.request :retry, GasfreeSdk.config.retry_options
+        f.response :json
+        f.use LogSanitizerMiddleware
+        f.response :logger, ::Logger.new($stdout), bodies: true if ENV["DEBUG_GASFREE_SDK"]
+        f.adapter Faraday.default_adapter
+      end
+    end
+// ... existing code ...
+```
+
+Маскирование чувствительных данных теперь внедрено в Faraday middleware:
+
+- Создан класс `LogSanitizerMiddleware`, который проходит по заголовкам и телам запросов/ответов и маскирует чувствительные данные.
+- Middleware подключён в `Client` перед стандартным Faraday `:logger`, чтобы все логи проходили через маскирование.
+
+Следующий шаг — тестирование и/или доработка по необходимости. Готов двигаться дальше!
+
+---
+
+**User**
+
+давай добавим приватный ридер sanitizer
+
+---
+
+**Cursor**
+
+```ruby
+require_relative "log_sanitizer"
+
+module GasfreeSdk
+  # Faraday middleware for sanitizing sensitive data before logging
+  class LogSanitizerMiddleware < Faraday::Middleware
++   private attr_reader :sanitizer
+    def initialize(app, sanitizer: LogSanitizer.new)
+      super(app)
+-     @sanitizer = sanitizer
++     @sanitizer = sanitizer
+    end
+
+    def call(env)
+-     # Sanitize request headers and body
+-     env[:request_headers] = @sanitizer.call(env[:request_headers]) if env[:request_headers]
+-     env[:body] = @sanitizer.call(env[:body]) if env[:body]
++     # Sanitize request headers and body
++     env[:request_headers] = sanitizer.call(env[:request_headers]) if env[:request_headers]
++     env[:body] = sanitizer.call(env[:body]) if env[:body]
+
+      @app.call(env).on_complete do |response_env|
+-       # Sanitize response headers and body
+-       response_env[:response_headers] = @sanitizer.call(response_env[:response_headers]) if response_env[:response_headers]
+-       response_env[:body] = @sanitizer.call(response_env[:body]) if response_env[:body]
++       # Sanitize response headers and body
++       response_env[:response_headers] = sanitizer.call(response_env[:response_headers]) if response_env[:response_headers]
++       response_env[:body] = sanitizer.call(response_env[:body]) if response_env[:body]
+      end
+    end
+  end
+end
+
+```
+
+В классе `LogSanitizerMiddleware` теперь добавлен приватный ридер `sanitizer`, и все обращения к экземпляру лог-санаизера идут через него.
+
+Если нужно — можем двигаться дальше или добавить тесты для middleware!
+
+---
+
+**User**
+
+добавления middleware должно быть достаточно? перепроверь
+
+---
+
+**Cursor**
+
+Проверка Faraday middleware и порядка подключения:
+
+- В Faraday порядок middleware критичен: каждый следующий middleware видит результат предыдущего.
+- В вашем коде:
+  ```ruby
+  f.use LogSanitizerMiddleware
+  f.response :logger, ::Logger.new($stdout), bodies: true if ENV["DEBUG_GASFREE_SDK"]
+  ```
+  Это значит, что все данные, которые попадут в стандартный Faraday `:logger`, уже будут обработаны вашим LogSanitizerMiddleware.
+
+- LogSanitizerMiddleware модифицирует:
+  - `env[:request_headers]`
+  - `env[:body]`
+  - `env[:response_headers]`
+  - `env[:body]` (ответ)
+
+- Faraday `:logger` логирует именно эти поля.
+
+**Вывод:**  
+Добавления кастомного middleware перед `:logger` действительно достаточно — все логи будут проходить через маскирование. Это стандартный и рекомендуемый способ для Faraday.
+
+**Возможные исключения:**
+- Если в проекте есть другие места ручного логирования (например, через `puts`, `logger.info` и т.п. вне Faraday), их тоже нужно обрабатывать отдельно. В вашем проекте таких мест не найдено.
+- Если появятся новые middleware, которые логируют до LogSanitizerMiddleware, их тоже нужно будет учесть.
+
+**Рекомендация:**  
+Текущая реализация полностью закрывает задачу для Faraday-логирования. Можно добавить тесты для middleware, чтобы убедиться, что маскирование работает как ожидается.
+
+Если хотите — могу подготовить тесты для LogSanitizerMiddleware!
+
+```ruby
+  f.use LogSanitizerMiddleware
+  f.response :logger, ::Logger.new($stdout), bodies: true if ENV["DEBUG_GASFREE_SDK"]
+```
 
