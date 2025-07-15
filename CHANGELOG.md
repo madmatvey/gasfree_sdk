@@ -9,7 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Logging and Security**: Migrated to a single middleware (`SanitizedLogsMiddleware`) for all HTTP request/response logging and masking.
-  - Removed `LogSanitizerMiddleware` and all legacy log-masking logic.
   - Now, *all* HTTP logs (when `DEBUG_GASFREE_SDK=1`) are guaranteed to be sanitized before output, with no risk of leaking sensitive data.
   - No other HTTP logging middleware is used, ensuring complete control over log output.
 
@@ -17,7 +16,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Stronger Data Protection**: Sensitive fields (private keys, tokens, signatures, etc.) are always masked in logs, even in debug mode. No original data is ever written to logs.
 
 ### Specs & Documentation
-- Updated and renamed specs to test `SanitizedLogsMiddleware` and verify that logs are always sanitized.
 - Updated README to reflect the new logging architecture and usage.
 
 ### Added

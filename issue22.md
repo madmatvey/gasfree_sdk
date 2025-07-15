@@ -1,5 +1,5 @@
 # Проблема с client_spec
-_Exported on 15.07.2025 at 13:34:11 GMT+3 from Cursor (1.2.4)_
+_Exported on 15.07.2025 at 13:36:29 GMT+3 from Cursor (1.2.4)_
 
 ---
 
@@ -2425,4 +2425,49 @@ README теперь расширен корректно:
   client = GasfreeSdk.client
   tokens = client.tokens
 ```
+
+---
+
+**User**
+
+вот это давай уберем - т.к. это эксперименты в рамках нашего MR
+Removed `LogSanitizerMiddleware` and all legacy log-masking logic.
+Updated and renamed specs to test `SanitizedLogsMiddleware` and verify that logs are always sanitized.
+
+---
+
+**Cursor**
+
+```markdown
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [1.1.0] - 2025-XX-XX
+
+### Changed
+- **Logging and Security**: Migrated to a single middleware (`SanitizedLogsMiddleware`) for all HTTP request/response logging and masking.
+  - Now, *all* HTTP logs (when `DEBUG_GASFREE_SDK=1`) are guaranteed to be sanitized before output, with no risk of leaking sensitive data.
+  - No other HTTP logging middleware is used, ensuring complete control over log output.
+
+### Security
+- **Stronger Data Protection**: Sensitive fields (private keys, tokens, signatures, etc.) are always masked in logs, even in debug mode. No original data is ever written to logs.
+
+### Specs & Documentation
+- Updated README to reflect the new logging architecture and usage.
+
+// ... rest of changelog unchanged ...
+```
+
+В CHANGELOG теперь:
+
+- Убраны внутренние/экспериментальные пункты:
+  - "Removed `LogSanitizerMiddleware` and all legacy log-masking logic."
+  - "Updated and renamed specs to test `SanitizedLogsMiddleware` and verify that logs are always sanitized."
+- Оставлены только пользовательские и релевантные изменения.
+
+Changelog теперь чистый и ориентирован на пользователя. Если нужно — могу помочь с релизной заметкой или финальной проверкой!
 
