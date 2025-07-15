@@ -5,7 +5,7 @@ require "logger"
 
 module GasfreeSdk
   # Faraday middleware for logging HTTP requests and responses with sanitized data
-  class SanitizedLogs < Faraday::Middleware
+  class SanitizedLogsMiddleware < Faraday::Middleware
     # @param app [#call] The next middleware in the stack
     # @param logger [Logger] Logger instance (default: Logger.new($stdout))
     # @param sanitizer [LogSanitizer] LogSanitizer instance (default: LogSanitizer.new)
