@@ -4,6 +4,7 @@ require "base64"
 require "openssl"
 require "time"
 require "uri"
+require_relative "sanitized_logs_middleware"
 
 module GasfreeSdk
   # Client for interacting with the GasFree API
@@ -17,8 +18,8 @@ module GasfreeSdk
         f.request :json
         f.request :retry, GasfreeSdk.config.retry_options
         f.response :json
+        f.use GasfreeSdk::SanitizedLogsMiddleware, logger: Logger.new($stdout) if ENV["DEBUG_GASFREE_SDK"]
         f.adapter Faraday.default_adapter
-        f.response :logger, ::Logger.new($stdout), bodies: true if ENV["DEBUG_GASFREE_SDK"]
       end
     end
 

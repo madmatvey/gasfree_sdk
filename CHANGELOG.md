@@ -5,7 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.0] - 2025-06-08
+## [1.1.0] - 2025-XX-XX
+
+### Changed
+- **Logging and Security**: Migrated to a single middleware (`SanitizedLogsMiddleware`) for all HTTP request/response logging and masking.
+  - Now, *all* HTTP logs (when `DEBUG_GASFREE_SDK=1`) are guaranteed to be sanitized before output, with no risk of leaking sensitive data.
+  - No other HTTP logging middleware is used, ensuring complete control over log output.
+
+### Security
+- **Stronger Data Protection**: Sensitive fields (private keys, tokens, signatures, etc.) are always masked in logs, even in debug mode. No original data is ever written to logs.
+
+### Specs & Documentation
+- Updated README to reflect the new logging architecture and usage.
 
 ### Added
 - **TronEIP712Signer Module**: Complete EIP-712 signature implementation for TRON GasFree transfers
@@ -27,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features
 - `GasfreeSdk::TronEIP712Signer.sign_typed_data_testnet()` - Sign for TRON Testnet
-- `GasfreeSdk::TronEIP712Signer.sign_typed_data_mainnet()` - Sign for TRON Mainnet  
+- `GasfreeSdk::TronEIP712Signer.sign_typed_data_mainnet()` - Sign for TRON Mainnet
 - `GasfreeSdk::TronEIP712Signer.sign_typed_data()` - Generic signing with custom domains
 - `GasfreeSdk::Crypto::Keccak256` - Pure Ruby Keccak256 implementation
 - `GasfreeSdk::Base58` - TRON address encoding/decoding utilities
