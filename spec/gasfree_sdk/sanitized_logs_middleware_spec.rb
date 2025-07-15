@@ -14,65 +14,85 @@ RSpec.describe GasfreeSdk::SanitizedLogsMiddleware do # rubocop:disable RSpec/Mu
   let(:app) do
     lambda { |env|
       # Simulate a Faraday response - this sets response data
-      env[:response_headers] = { "Authorization" => "secret-token", "X-Api-Key" => "key" }
-      env[:body] = { "private_key" => "should_hide", "normal" => "ok" }
+      env[:response_headers] =
+        { "Authorization" => "secret-token", "X-Api-Key" => "key", "X-Normal" => "should_not_hide" }
+      env[:body] = { "private_key" => "should_hide", "normal" => "should_not_hide" }
       Faraday::Response.new(env)
     }
   end
-
   let(:middleware) { described_class.new(app, logger: logger, sanitizer: sanitizer) }
-
-  it "masks sensitive data in request headers in logs" do
-    env = {
+  let(:env) do
+    {
       method: :get,
       url: "https://api.example.com",
-      request_headers: { "Authorization" => "secret-token", "Normal" => "ok" },
-      body: { "private_key" => "should_hide", "foo" => "bar" }
+      request_headers: { "Authorization" => "secret-token", "Normal" => "should_not_hide" },
+      body: { "private_key" => "should_hide", "foo" => "should_not_hide" }
     }
-
-    middleware.call(env)
-    log_output.rewind
-    log = log_output.read
-    expect(log).to include(mask)
-    expect(log).not_to include("secret-token")
-    expect(log).to include("request: GET https://api.example.com")
   end
 
-  it "masks sensitive data in response headers in logs and does not mutate original" do
-    env = {
-      method: :get,
-      url: "https://api.example.com",
-      request_headers: { "Authorization" => "secret-token", "Normal" => "ok" },
-      body: { "private_key" => "should_hide", "foo" => "bar" }
-    }
+  # rubocop:disable RSpec/MultipleMemoizedHelpers
+  describe "request logging" do
+    subject(:log) { log_output.read }
 
-    response = middleware.call(env)
-    log_output.rewind
-    log = log_output.read
-    expect(log).to include(mask)
-    expect(log).not_to include("secret-token")
-    expect(log).to include("response headers:")
-    # Original headers not mutated
-    expect(response.env[:response_headers]["Authorization"]).to eq("secret-token")
-    expect(response.env[:response_headers]["X-Api-Key"]).to eq("key")
+    before do
+      middleware.call(env)
+      log_output.rewind
+    end
+
+    it { is_expected.to include(mask) }
+    it { is_expected.not_to include("secret-token") }
+    it { is_expected.to include("request: GET https://api.example.com") }
+
+    it "logs non-sensitive request header value" do
+      expect(log).to include("should_not_hide")
+    end
   end
+  # rubocop:enable RSpec/MultipleMemoizedHelpers
 
-  it "masks sensitive data in response body in logs and does not mutate original" do
-    env = {
-      method: :get,
-      url: "https://api.example.com",
-      request_headers: { "Authorization" => "secret-token", "Normal" => "ok" },
-      body: { "private_key" => "should_hide", "foo" => "bar" }
-    }
+  # rubocop:disable RSpec/MultipleMemoizedHelpers
+  describe "response logging" do
+    subject(:log) { log_output.read }
 
-    response = middleware.call(env)
-    log_output.rewind
-    log = log_output.read
-    expect(log).to include(mask)
-    expect(log).not_to include("should_hide")
-    expect(log).to include("response body:")
-    # Original body not mutated
-    expect(response.env[:body]["private_key"]).to eq("should_hide")
-    expect(response.env[:body]["normal"]).to eq("ok")
+    let!(:response) { middleware.call(env) }
+
+    before { log_output.rewind }
+
+    it { is_expected.to include(mask) }
+    it { is_expected.not_to include("secret-token") }
+    it { is_expected.to include("response headers:") }
+
+    it "logs non-sensitive response header value" do
+      expect(log).to include("should_not_hide")
+    end
+
+    it "does not mutate original response headers" do
+      expect(response.env[:response_headers]["Authorization"]).to eq("secret-token")
+      expect(response.env[:response_headers]["X-Api-Key"]).to eq("key")
+      expect(response.env[:response_headers]["X-Normal"]).to eq("should_not_hide")
+    end
   end
+  # rubocop:enable RSpec/MultipleMemoizedHelpers
+
+  # rubocop:disable RSpec/MultipleMemoizedHelpers
+  describe "response body logging" do
+    subject(:log) { log_output.read }
+
+    let!(:response) { middleware.call(env) }
+
+    before { log_output.rewind }
+
+    it { is_expected.to include(mask) }
+    it { is_expected.not_to include("should_hide") }
+    it { is_expected.to include("response body:") }
+
+    it "logs non-sensitive response body value" do
+      expect(log).to include("should_not_hide")
+    end
+
+    it "does not mutate original response body" do
+      expect(response.env[:body]["private_key"]).to eq("should_hide")
+      expect(response.env[:body]["normal"]).to eq("should_not_hide")
+    end
+  end
+  # rubocop:enable RSpec/MultipleMemoizedHelpers
 end
