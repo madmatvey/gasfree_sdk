@@ -5,7 +5,7 @@ require "gasfree_sdk/sanitized_logs_middleware"
 require "faraday"
 require "stringio"
 
-RSpec.describe GasfreeSdk::SanitizedLogsMiddleware do
+RSpec.describe GasfreeSdk::SanitizedLogsMiddleware do # rubocop:disable RSpec/MultipleMemoizedHelpers
   let(:sensitive_fields) { %w[authorization x-api-key private_key] }
   let(:mask) { "***REDACTED***" }
   let(:sanitizer) { GasfreeSdk::LogSanitizer.new(sensitive_fields: sensitive_fields, mask: mask) }
