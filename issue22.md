@@ -1,5 +1,5 @@
 # Проблема с client_spec
-_Exported on 15.07.2025 at 12:58:38 GMT+3 from Cursor (1.2.4)_
+_Exported on 15.07.2025 at 13:00:19 GMT+3 from Cursor (1.2.4)_
 
 ---
 
@@ -1276,4 +1276,34 @@ When `DEBUG_GASFREE_SDK` environment variable is enabled:
 Реализация по этому плану гарантирует, что в логах SDK никогда не окажется приватных данных, а все спеки будут это подтверждать.
 
 Готов приступить к реализации по этому детализированному плану!
+
+---
+
+**User**
+
+Супер. Приступай к пункту
+1. Удаление стандартного логгера Faraday
+
+---
+
+**Cursor**
+
+```ruby
+// ... existing code ...
+        f.request :json
+        f.request :retry, GasfreeSdk.config.retry_options
+        f.response :json
+        f.use LogSanitizerMiddleware
+        # f.response :logger, ::Logger.new($stdout), bodies: true if ENV["DEBUG_GASFREE_SDK"]
+        f.adapter Faraday.default_adapter
+// ... existing code ...
+```
+
+Стандартный Faraday-логгер удалён из стека клиента.
+
+**Дальнейшие шаги:**
+- Теперь можно внедрять собственный middleware для безопасного логирования (`SanitizedLogs`/`LogSanitizerLogger`).
+- После этого — интеграция, спеки, тестирование и документация.
+
+Готов приступить к следующему пункту?
 

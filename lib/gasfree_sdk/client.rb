@@ -19,7 +19,6 @@ module GasfreeSdk
         f.request :retry, GasfreeSdk.config.retry_options
         f.response :json
         f.use LogSanitizerMiddleware
-        f.response :logger, ::Logger.new($stdout), bodies: true if ENV["DEBUG_GASFREE_SDK"]
         f.adapter Faraday.default_adapter
       end
     end
