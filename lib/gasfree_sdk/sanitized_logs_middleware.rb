@@ -30,7 +30,7 @@ module GasfreeSdk
     attr_reader :logger, :sanitizer
 
     def log_request(env)
-      logger.info("request: #{env.method.to_s.upcase} #{env.url}")
+      logger.info("request: #{env[:method].to_s.upcase} #{env[:url]}")
       sanitized_headers = sanitizer.call(env[:request_headers]) if env[:request_headers]
       logger.info("request headers: #{sanitized_headers}") if sanitized_headers
       return unless env[:body]

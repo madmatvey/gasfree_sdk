@@ -4,7 +4,7 @@ require "base64"
 require "openssl"
 require "time"
 require "uri"
-require_relative "log_sanitizer_middleware"
+require_relative "sanitized_logs_middleware"
 
 module GasfreeSdk
   # Client for interacting with the GasFree API
