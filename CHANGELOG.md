@@ -5,37 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.1.0] - 2025-01-XX
+## [1.1.0] - 2025-XX-XX
 
-### Added
-- **LogSanitizer**: Automatic masking of sensitive data in debug logs
-  - Recursive sanitization of HTTP request/response data
-  - Protection of private keys, tokens, signatures, and other sensitive fields
-  - Customizable sensitive field detection and masking patterns
-  - Support for nested data structures (Hash, Array, primitive types)
-
-- **LogSanitizerMiddleware**: Faraday middleware for automatic log sanitization
-  - Integrated with existing debug logging (`DEBUG_GASFREE_SDK=1`)
-  - Masks sensitive data before logging to prevent security leaks
-  - Handles both request and response data sanitization
+### Changed
+- **Logging and Security**: Migrated to a single middleware (`SanitizedLogsMiddleware`) for all HTTP request/response logging and masking.
+  - Removed `LogSanitizerMiddleware` and all legacy log-masking logic.
+  - Now, *all* HTTP logs (when `DEBUG_GASFREE_SDK=1`) are guaranteed to be sanitized before output, with no risk of leaking sensitive data.
+  - No other HTTP logging middleware is used, ensuring complete control over log output.
 
 ### Security
-- **Automatic Data Protection**: Sensitive fields are now automatically masked in debug logs
-  - Headers: `Authorization`, `Api-Key`, `X-Api-Key`, etc.
-  - Body fields: `private_key`, `api_secret`, `signature`, `token`, etc.
-  - Prevents accidental exposure of credentials in log files
+- **Stronger Data Protection**: Sensitive fields (private keys, tokens, signatures, etc.) are always masked in logs, even in debug mode. No original data is ever written to logs.
 
-### Features
-- `GasfreeSdk::LogSanitizer` - Universal data sanitization utility
-- `GasfreeSdk::LogSanitizerMiddleware` - Faraday middleware for automatic sanitization
-- Environment variable `DEBUG_GASFREE_SDK=1` now includes automatic data protection
-
-### Documentation
-- Added "Debugging and Logging" section to README.md
-- Documented automatic sensitive data protection features
-- Added usage examples for debug logging
-
-## [1.0.0] - 2025-06-08
+### Specs & Documentation
+- Updated and renamed specs to test `SanitizedLogsMiddleware` and verify that logs are always sanitized.
+- Updated README to reflect the new logging architecture and usage.
 
 ### Added
 - **TronEIP712Signer Module**: Complete EIP-712 signature implementation for TRON GasFree transfers

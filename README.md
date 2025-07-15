@@ -253,12 +253,28 @@ end
 
 ## Debugging and Logging
 
-The SDK automatically masks sensitive data in debug logs to prevent security leaks.
+The SDK uses a custom Faraday middleware (`SanitizedLogsMiddleware`) to ensure that **all HTTP request and response logs are automatically sanitized**. Sensitive data is never written to logs, even in debug mode.
 
 ### Enable Debug Logging
 
 ```bash
 export DEBUG_GASFREE_SDK=1
+```
+
+When this environment variable is set, the SDK will log HTTP requests and responses using only sanitized data. This is handled automatically; you do not need to configure anything extra.
+
+### How It Works
+
+- The SDK integrates `SanitizedLogsMiddleware` into the Faraday stack.
+- This middleware intercepts all HTTP traffic and logs method, URL, headers, and body **with sensitive fields masked** (e.g., `***REDACTED***`).
+- The original data is never mutated, and only masked data is ever written to logs.
+- No other HTTP logging middleware is used, so there is no risk of leaking secrets.
+
+### Example Integration (automatic)
+
+```ruby
+client = GasfreeSdk.client
+# If DEBUG_GASFREE_SDK=1, all HTTP logs will be sanitized automatically.
 ```
 
 ### Automatic Data Protection
@@ -275,7 +291,6 @@ When debug logging is enabled, sensitive fields (private keys, tokens, signature
 # With DEBUG_GASFREE_SDK=1
 client = GasfreeSdk.client
 tokens = client.tokens
-
 # Console output (sensitive data automatically masked):
 # GET https://open.gasfree.io/tron/api/v1/config/token/all
 # Request Headers: {"Authorization"=>"***REDACTED***", "Timestamp"=>"1703123456"}
