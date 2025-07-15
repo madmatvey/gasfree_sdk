@@ -1,5 +1,5 @@
 # Проблема с client_spec
-_Exported on 15.07.2025 at 13:00:19 GMT+3 from Cursor (1.2.4)_
+_Exported on 15.07.2025 at 13:02:48 GMT+3 from Cursor (1.2.4)_
 
 ---
 
@@ -1306,4 +1306,84 @@ When `DEBUG_GASFREE_SDK` environment variable is enabled:
 - После этого — интеграция, спеки, тестирование и документация.
 
 Готов приступить к следующему пункту?
+
+---
+
+**User**
+
+Супер. Теперь давай займемся
+2. Реализация кастомного middleware SanitizedLogs
+
+---
+
+**Cursor**
+
+```ruby
+# frozen_string_literal: true
+
+require_relative "log_sanitizer"
+require "logger"
+
+module GasfreeSdk
+  # Faraday middleware for logging HTTP requests and responses with sanitized data
+  class SanitizedLogs < Faraday::Middleware
+    # @param app [#call] The next middleware in the stack
+    # @param logger [Logger] Logger instance (default: Logger.new($stdout))
+    # @param sanitizer [LogSanitizer] LogSanitizer instance (default: LogSanitizer.new)
+    def initialize(app, logger: Logger.new($stdout), sanitizer: LogSanitizer.new)
+      super(app)
+      @logger = logger
+      @sanitizer = sanitizer
+    end
+
+    # Faraday middleware entry point
+    # @param env [Faraday::Env] Faraday request/response environment
+    # @return [Faraday::Response]
+    def call(env)
+      log_request(env)
+      @app.call(env).on_complete do |response_env|
+        log_response(response_env)
+      end
+    end
+
+    private
+
+    attr_reader :logger, :sanitizer
+
+    def log_request(env)
+      logger.info("request: #{env.method.to_s.upcase} #{env.url}")
+      sanitized_headers = sanitizer.call(env[:request_headers]) if env[:request_headers]
+      logger.info("request headers: #{sanitized_headers}") if sanitized_headers
+      if env[:body]
+        sanitized_body = sanitizer.call(env[:body])
+        logger.info("request body: #{sanitized_body}")
+      end
+    end
+
+    def log_response(env)
+      logger.info("response: Status #{env.status}")
+      sanitized_headers = sanitizer.call(env[:response_headers]) if env[:response_headers]
+      logger.info("response headers: #{sanitized_headers}") if sanitized_headers
+      if env[:body]
+        sanitized_body = sanitizer.call(env[:body])
+        logger.info("response body: #{sanitized_body}")
+      end
+    end
+  end
+end
+
+```
+
+Кастомный middleware `SanitizedLogs` для безопасного логирования реализован (файл `lib/gasfree_sdk/sanitized_logs.rb`):
+
+- Логирует HTTP-запросы и ответы с помощью замаскированных данных (через LogSanitizer).
+- Не мутирует оригинальные данные.
+- Логгер и санитайзер можно подменять (удобно для тестов).
+- Полностью совместим с Faraday 2.x.
+
+**Следующий шаг:**  
+- Интегрировать этот middleware в Faraday-стек вместо стандартного логгера.
+- Добавить спеки, которые проверяют, что в логах действительно нет утечек.
+
+Готов продолжать!
 
