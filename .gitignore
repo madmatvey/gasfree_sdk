@@ -13,6 +13,9 @@
 # rspec failure tracking
 .rspec_status
 
+# Ruby version
+.ruby-version
+
 /.cursor/
 /.idea/
 

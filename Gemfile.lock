@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    gasfree_sdk (1.0.0)
+    gasfree_sdk (1.1.0)
       dry-configurable (~> 1.1)
       dry-struct (~> 1.6)
       dry-types (~> 1.7)

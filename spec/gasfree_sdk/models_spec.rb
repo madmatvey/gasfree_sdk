@@ -216,4 +216,35 @@ RSpec.describe GasfreeSdk::Models do
       expect(response.txn_amount).to eq("1000000")
     end
   end
+
+  describe "Amount type validation" do
+    let(:max_uint256) { (2**256) - 1 }
+    let(:amount_type) { GasfreeSdk::Types::Amount }
+
+    it "accepts zero" do
+      expect(amount_type["0"]).to eq("0")
+    end
+
+    it "accepts one" do
+      expect(amount_type["1"]).to eq("1")
+    end
+
+    it "accepts MAX_UINT256" do
+      expect(amount_type[max_uint256.to_s]).to eq(max_uint256.to_s)
+    end
+
+    it "rejects value greater than MAX_UINT256" do
+      too_big = (max_uint256 + 1).to_s
+      puts "TOO_BIG: #{too_big}"
+      expect { amount_type[too_big] }.to raise_error(Dry::Types::CoercionError)
+    end
+
+    it "rejects negative values" do
+      expect { amount_type["-1"] }.to raise_error(Dry::Types::CoercionError)
+    end
+
+    it "rejects non-numeric strings" do
+      expect { amount_type["abc123"] }.to raise_error(Dry::Types::CoercionError)
+    end
+  end
 end
