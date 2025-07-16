@@ -16,6 +16,7 @@ require_relative "gasfree_sdk/models"
 require_relative "gasfree_sdk/crypto"
 require_relative "gasfree_sdk/base58"
 require_relative "gasfree_sdk/tron_eip712_signer"
+require_relative "gasfree_sdk/utils/amount_converter"
 
 # Main module for GasFree SDK
 module GasfreeSdk
