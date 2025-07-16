@@ -209,3 +209,4 @@ expect(AmountConverter.to_base_units(1.5, 6)).to eq(1_500_000)
 
 ✅ Добавлены тесты
 ```
+

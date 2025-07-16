@@ -1,5 +1,7 @@
-require 'spec_helper'
-require 'gasfree_sdk/utils/amount_converter'
+# frozen_string_literal: true
+
+require "spec_helper"
+require "gasfree_sdk/utils/amount_converter"
 
 RSpec.describe GasfreeSdk::Utils::AmountConverter do
   describe ".to_base_units" do
