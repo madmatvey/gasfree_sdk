@@ -9,6 +9,48 @@ RSpec.describe GasfreeSdk::Client do
       config.api_secret = "test-secret"
       config.api_endpoint = "https://test.gasfree.io/"
     end
+
+    # Stub the configuration check call that now happens on initialization
+    stub_request(:get, "https://test.gasfree.io/api/v1/config/token/all")
+      .to_return(status: 200, body: { code: 200,
+                                      data: { tokens: [] } }.to_json, headers: { "Content-Type" => "application/json" })
+  end
+
+  describe "initialization" do
+    context "when the API endpoint is unreachable" do
+      before do
+        stub_request(:get, "https://test.gasfree.io/api/v1/config/token/all")
+          .to_raise(Faraday::ConnectionFailed.new("Connection failed"))
+      end
+
+      it "raises a connection error" do
+        expect { described_class.new }.to raise_error(Faraday::ConnectionFailed)
+      end
+    end
+
+    context "when the credentials are invalid" do
+      before do
+        # We need to build the error message exactly as the API would, so we can match it.
+        # Let's find out what error code the API uses for this. Based on the `handle_response`
+        # method, the API returns a JSON with `code`, `reason`, and `message`.
+        # A 401 status typically means authentication failure.
+        stub_request(:get, "https://test.gasfree.io/api/v1/config/token/all")
+          .to_return(
+            status: 401,
+            body: {
+              code: "AUTHENTICATION_ERROR", # Assuming this is the code for auth errors
+              reason: "InvalidCredentials",
+              message: "Invalid API key or signature."
+            }.to_json,
+            headers: { "Content-Type" => "application/json" }
+          )
+      end
+
+      it "raises an AuthenticationError" do
+        # The `handle_response` method should catch this and raise our custom error.
+        expect { described_class.new }.to raise_error(GasfreeSdk::AuthenticationError, "Invalid API key or signature.")
+      end
+    end
   end
 
   describe "#tokens" do
