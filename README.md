@@ -302,3 +302,19 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/madmat
 ## License
 
 The gem is available as open source under the terms of the [LGPL v3.0](https://www.gnu.org/licenses/lgpl-3.0.html) © 2025 Eugene Leontev (https://github.com/madmatvey)
+
+## API Endpoint URL Validation
+
+Начиная с версии X.X.X, параметр `api_endpoint` в конфигурации SDK валидируется на корректность. При попытке задать невалидный URL (например, строку без схемы или с неподдерживаемой схемой) будет выброшено исключение `ArgumentError`.
+
+**Примеры:**
+
+```ruby
+GasfreeSdk.configure do |config|
+  config.api_endpoint = "https://valid.example.com/" # OK
+  config.api_endpoint = "not a url"                  # => ArgumentError
+  config.api_endpoint = "ftp://example.com"          # => ArgumentError
+end
+```
+
+Поддерживаются только схемы `http` и `https`.

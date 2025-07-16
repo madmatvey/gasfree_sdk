@@ -21,8 +21,17 @@ require_relative "gasfree_sdk/tron_eip712_signer"
 module GasfreeSdk
   extend Dry::Configurable
 
+  def self.validate_url!(url)
+    uri = URI.parse(url)
+    raise ArgumentError, "Invalid API endpoint URL: #{url}" unless uri.is_a?(URI::HTTP) || uri.is_a?(URI::HTTPS)
+
+    url
+  rescue URI::InvalidURIError
+    raise ArgumentError, "Invalid API endpoint URL: #{url}"
+  end
+
   # Default API endpoint
-  setting :api_endpoint, default: "https://open.gasfree.io/tron/"
+  setting :api_endpoint, default: "https://open.gasfree.io/tron/", constructor: ->(url) { validate_url!(url) }
   setting :api_key, default: nil
   setting :api_secret, default: nil
   setting :default_chain_id, default: 1 # Ethereum mainnet

@@ -7,8 +7,10 @@ AllCops:
     - 'bin/**/*'
     - 'examples/**/*'
 
-require:
+plugins:
   - rubocop-rake
+
+require:
   - rubocop-rspec
 
 # Disable problematic cops that cause errors
