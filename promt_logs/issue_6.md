@@ -868,3 +868,303 @@ client = GasfreeSdk::Client.new(
 
 Все требования ruby-documentation.mdc соблюдены.
 
+
+# Refactor code for better efficiency
+_Exported on 17/07/2025 at 21:25:53 GMT+4 from Cursor (1.2.4)_
+
+Изменения не приняты в master, так как не соответствуют best practices.
+
+---
+
+**User**
+
+Refactor this
+
+---
+
+**Cursor**
+
+План:
+1. Провести рефакторинг класса Client для повышения читаемости и уменьшения дублирования.
+2. Вынести повторяющиеся блоки (например, обработку таймаутов, преобразования данных) в отдельные методы.
+3. Сократить методы, разбив крупные на более мелкие.
+4. Проверить соответствие стилю RuboCop.
+5. Не менять публичный API и поведение.
+
+Предлагаемые изменения:
+- Вынести обработку таймаутов в отдельный приватный метод.
+- Вынести формирование сигнатуры в отдельный метод.
+- Сократить методы transform_* и extract_* за счёт вспомогательных функций.
+- Добавить приватный метод для формирования полного пути (base_path + path).
+- Добавить комментарии для сложных мест.
+- Проверить и привести к единому стилю оформление методов и документации.
+
+Приступаю к рефакторингу.
+
+```ruby
+# frozen_string_literal: true
+
+require "base64"
+require "openssl"
+require "time"
+require "uri"
+require_relative "sanitized_logs_middleware"
+
+module GasfreeSdk
+  # Client for interacting with the GasFree API
+  class Client
+    attr_reader :connection
+
+    # Initialize a new GasFree client
+    # @param open_timeout [Integer] Connection open timeout in seconds (default: 5)
+    # @param read_timeout [Integer] Read response timeout in seconds (default: 10)
+    # @param write_timeout [Integer] Write request timeout in seconds (default: 10)
+    def initialize(open_timeout: 5, read_timeout: 10, write_timeout: 10)
+      @connection = Faraday.new(url: GasfreeSdk.config.api_endpoint, request: {
+                                  open_timeout: open_timeout,
+                                  read_timeout: read_timeout,
+                                  write_timeout: write_timeout
+                                }) do |f|
+        f.request :json
+        f.request :retry, GasfreeSdk.config.retry_options
+        f.response :json
+        f.use GasfreeSdk::SanitizedLogsMiddleware, logger: Logger.new($stdout) if ENV["DEBUG_GASFREE_SDK"]
+        f.adapter Faraday.default_adapter
+      end
+    end
+
+    # Get all supported tokens
+    # @return [Array<Token>] List of supported tokens
+    def tokens
+      response = get("api/v1/config/token/all")
+      response.dig("data", "tokens").map { |token| Models::Token.new(transform_token_data(token)) }
+    end
+
+    # Get all service providers
+    # @return [Array<Provider>] List of service providers
+    def providers
+      response = get("api/v1/config/provider/all")
+      response.dig("data", "providers").map { |provider| Models::Provider.new(transform_provider_data(provider)) }
+    end
+
+    # Get GasFree account info
+    # @param account_address [String] The user's EOA address
+    # @return [GasFreeAddress] The GasFree account info
+    def address(account_address)
+      response = get("api/v1/address/#{account_address}")
+      Models::GasFreeAddress.new(transform_address_data(response["data"]))
+    end
+
+    # Submit a GasFree transfer
+    # @param request [TransferRequest] The transfer request
+    # @return [TransferResponse] The transfer response
+    def submit_transfer(request)
+      response = post("api/v1/gasfree/submit", transform_transfer_request_data(request.to_h))
+      Models::TransferResponse.new(transform_transfer_response_data(response["data"]))
+    end
+
+    # Get transfer status
+    # @param trace_id [String] The transfer trace ID
+    # @return [TransferResponse] The transfer status
+    def transfer_status(trace_id)
+      response = get("api/v1/gasfree/#{trace_id}")
+      Models::TransferResponse.new(transform_transfer_response_data(response["data"]))
+    end
+
+    private
+
+    # Make a GET request
+    def get(path, params = {}, request_timeouts = {})
+      request_with_sign(:get, path, params: params, request_timeouts: request_timeouts)
+    end
+
+    # Make a POST request
+    def post(path, body, request_timeouts = {})
+      request_with_sign(:post, path, body: body, request_timeouts: request_timeouts)
+    end
+
+    # Универсальный метод для GET/POST с подписью и таймаутами
+    def request_with_sign(method, path, params: {}, body: nil, request_timeouts: {})
+      timestamp = Time.now.to_i
+      full_path = build_full_path(path)
+      response =
+        if method == :get
+          connection.get(path, params) do |req|
+            sign_request(req, "GET", full_path, timestamp)
+            apply_timeouts(req, request_timeouts)
+          end
+        else
+          connection.post(path) do |req|
+            req.body = body
+            sign_request(req, "POST", full_path, timestamp)
+            apply_timeouts(req, request_timeouts)
+          end
+        end
+      handle_response(response)
+    end
+
+    # Формирует полный путь для подписи
+    def build_full_path(path)
+      endpoint_uri = URI(GasfreeSdk.config.api_endpoint)
+      base_path = endpoint_uri.path.chomp("")
+      path = "/#{path}" unless path.start_with?("/")
+      "#{base_path}#{path}"
+    end
+
+    # Применяет таймауты к Faraday::Request
+    def apply_timeouts(req, timeouts)
+      timeouts.each { |k, v| req.options.send("#{k}=", v) if v }
+    end
+
+    # Подписывает запрос
+    def sign_request(request, method, full_path, timestamp)
+      api_key = GasfreeSdk.config.api_key
+      api_secret = GasfreeSdk.config.api_secret
+      raise AuthenticationError, "API key and secret are required" if api_key.nil? || api_secret.nil?
+      message = "#{method}#{full_path}#{timestamp}"
+      signature = Base64.strict_encode64(OpenSSL::HMAC.digest("SHA256", api_secret, message))
+      request.headers["Timestamp"] = timestamp.to_s
+      request.headers["Authorization"] = "ApiKey #{api_key}:#{signature}"
+    end
+
+    # Обработка ответа API
+    def handle_response(response)
+      data = response.body
+      return data if data["code"] == 200
+      raise GasfreeSdk.build_error(
+        code: data["code"],
+        reason: data["reason"],
+        message: data["message"]
+      )
+    end
+
+    # Преобразования данных (token, provider, address, asset, transfer_response)
+    def transform_token_data(token_data)
+      {
+        token_address: token_data["tokenAddress"],
+        created_at: Types::JSON::Time.call(token_data["createdAt"]),
+        updated_at: Types::JSON::Time.call(token_data["updatedAt"]),
+        activate_fee: Types::JSON::Amount.call(token_data["activateFee"]),
+        transfer_fee: Types::JSON::Amount.call(token_data["transferFee"]),
+        supported: token_data["supported"],
+        symbol: token_data["symbol"],
+        decimal: token_data["decimal"]
+      }
+    end
+
+    def transform_provider_data(provider_data)
+      {
+        address: provider_data["address"],
+        name: provider_data["name"],
+        icon: provider_data["icon"],
+        website: provider_data["website"],
+        config: transform_provider_config_data(provider_data["config"])
+      }
+    end
+
+    def transform_provider_config_data(config_data)
+      {
+        max_pending_transfer: config_data["maxPendingTransfer"],
+        min_deadline_duration: config_data["minDeadlineDuration"],
+        max_deadline_duration: config_data["maxDeadlineDuration"],
+        default_deadline_duration: config_data["defaultDeadlineDuration"]
+      }
+    end
+
+    def transform_address_data(address_data)
+      {
+        account_address: address_data["accountAddress"],
+        gas_free_address: address_data["gasFreeAddress"],
+        active: address_data["active"],
+        nonce: address_data["nonce"],
+        allow_submit: address_data["allowSubmit"],
+        assets: Array(address_data["assets"]).map { |asset| transform_asset_data(asset) }
+      }
+    end
+
+    def transform_asset_data(asset_data)
+      {
+        token_address: asset_data["tokenAddress"],
+        token_symbol: asset_data["tokenSymbol"],
+        activate_fee: Types::JSON::Amount.call(asset_data["activateFee"]),
+        transfer_fee: Types::JSON::Amount.call(asset_data["transferFee"]),
+        decimal: asset_data["decimal"],
+        frozen: Types::JSON::Amount.call(asset_data["frozen"])
+      }
+    end
+
+    def transform_transfer_request_data(request_data)
+      {
+        "token" => request_data[:token],
+        "serviceProvider" => request_data[:service_provider],
+        "user" => request_data[:user],
+        "receiver" => request_data[:receiver],
+        "value" => request_data[:value],
+        "maxFee" => request_data[:max_fee],
+        "deadline" => request_data[:deadline],
+        "version" => request_data[:version],
+        "nonce" => request_data[:nonce],
+        "sig" => request_data[:sig]
+      }
+    end
+
+    def transform_transfer_response_data(response_data)
+      extract_basic_transfer_fields(response_data)
+        .merge(extract_transaction_fields(response_data))
+        .compact
+    end
+
+    def extract_basic_transfer_fields(response_data)
+      {
+        id: response_data["id"],
+        created_at: get_field_value(response_data, "createdAt", "created_at"),
+        updated_at: get_field_value(response_data, "updatedAt", "updated_at"),
+        account_address: get_field_value(response_data, "accountAddress", "account_address"),
+        gas_free_address: get_field_value(response_data, "gasFreeAddress", "gas_free_address"),
+        provider_address: get_field_value(response_data, "providerAddress", "provider_address"),
+        target_address: get_field_value(response_data, "targetAddress", "target_address"),
+        token_address: get_field_value(response_data, "tokenAddress", "token_address"),
+        amount: response_data["amount"],
+        max_fee: get_field_value(response_data, "maxFee", "max_fee"),
+        signature: response_data["signature"],
+        nonce: response_data["nonce"],
+        expired_at: get_field_value(response_data, "expiredAt", "expired_at"),
+        state: response_data["state"]
+      }
+    end
+
+    def extract_transaction_fields(response_data)
+      {
+        estimated_activate_fee: get_field_value(response_data, "estimatedActivateFee", "estimated_activate_fee"),
+        estimated_transfer_fee: get_field_value(response_data, "estimatedTransferFee", "estimated_transfer_fee"),
+        txn_hash: get_field_value(response_data, "txnHash", "txn_hash"),
+        txn_block_num: get_field_value(response_data, "txnBlockNum", "txn_block_num"),
+        txn_block_timestamp: get_field_value(response_data, "txnBlockTimestamp", "txn_block_timestamp"),
+        txn_state: get_field_value(response_data, "txnState", "txn_state"),
+        txn_activate_fee: get_field_value(response_data, "txnActivateFee", "txn_activate_fee"),
+        txn_transfer_fee: get_field_value(response_data, "txnTransferFee", "txn_transfer_fee"),
+        txn_total_fee: get_field_value(response_data, "txnTotalFee", "txn_total_fee"),
+        txn_amount: get_field_value(response_data, "txnAmount", "txn_amount"),
+        txn_total_cost: get_field_value(response_data, "txnTotalCost", "txn_total_cost")
+      }
+    end
+
+    def get_field_value(data, camel_case_key, snake_case_key)
+      data[camel_case_key] || data[snake_case_key]
+    end
+  end
+end
+
+```
+
+Рефакторинг выполнен:
+
+- Вынесена обработка таймаутов в apply_timeouts.
+- Формирование полного пути для подписи — build_full_path.
+- Универсальный метод для GET/POST с подписью и таймаутами — request_with_sign.
+- Методы преобразования и извлечения данных оставлены компактными.
+- Добавлены комментарии для приватных методов.
+- Публичный API не изменён.
+
+Следующий шаг: проверить код RuboCop и тестами. Нужно ли это сделать?
+
