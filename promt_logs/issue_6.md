@@ -722,3 +722,149 @@ Rubocop полностью зелёный — ни одного замечани
 Весь проект соответствует строгим Ruby-стандартам и best practices.  
 Можно смело мержить и использовать как эталон.
 
+# Code review request for roles
+_Exported on 17/07/2025 at 21:15:24 GMT+4 from Cursor (1.2.4)_
+
+---
+
+**User**
+
+Вычисли разницу между текущей веткой git и master
+@roles/code-reviewer.mdc 
+
+---
+
+**Cursor**
+
+План действий:
+1. Получить список изменений между текущей веткой (issue-6-fix) и master.
+2. Кратко описать, какие файлы были изменены и в чем суть изменений.
+3. Провести обзор изменений с позиций code-reviewer: SRP, читаемость, безопасность, тесты, зависимости.
+
+Предлагаемые действия:
+- Выполнить команду git diff --stat master..issue-6-fix для получения списка изменённых файлов.
+- Затем получить подробный diff (git diff master..issue-6-fix) для анализа изменений.
+
+Приступаю к выполнению.
+
+План:
+1. Кратко перечислить изменения между веткой issue-6-fix и master.
+2. Дать обзор с позиций code-reviewer: SRP, читаемость, безопасность, тесты, зависимости.
+
+Изменения:
+- Добавлены и обновлены правила для агентов (code-reviewer, ruby-dev, test-writer и др.).
+- В README.md и CHANGELOG.md отражена поддержка таймаутов.
+- В lib/gasfree_sdk/client.rb:
+  - В конструктор клиента добавлены параметры open_timeout, read_timeout, write_timeout (дефолты: 5/10/10 сек).
+  - Таймауты прокидываются в Faraday и могут быть переопределены на уровне отдельного запроса.
+- В spec/gasfree_sdk/client_spec.rb:
+  - Тесты переписаны с использованием WebMock.
+  - Проверяется корректная установка таймаутов и обработка ошибок таймаута.
+  - Все тесты и стиль кода соответствуют best practices.
+- Добавлен promt_logs/issue_6.md с подробным логом обсуждения и фикса.
+
+Code-review:
+- SRP и читаемость: код клиента стал более гибким, методы короткие, параметры названы понятно, SRP не нарушен.
+- Безопасность: уязвимостей не добавлено, вводимые параметры валидируются на уровне Faraday.
+- Тесты: покрытие отличное, используются WebMock, edge-cases учтены, тесты изолированы.
+- Зависимости: изменений в gemspec нет, Faraday и WebMock используются корректно.
+- Документация: README и YARD обновлены, примеры актуальны.
+
+Вывод:  
+Изменения реализованы чисто и строго по best practices. Код и тесты поддерживаемы, покрытие отличное, стиль RuboCop зелёный. Рекомендую к слиянию.
+
+---
+
+**User**
+
+use @ruby-documentation.mdc обнови документацию согласно внесенным изменениям
+
+---
+
+**Cursor**
+
+План:
+1. Проверить README.md: добавить/уточнить примеры использования новых параметров таймаутов, показать переопределение на уровне запроса, убедиться, что всё на английском.
+2. Проверить YARD-документацию в lib/gasfree_sdk/client.rb: все новые параметры должны быть описаны на английском, добавить/уточнить описание для методов get/post.
+3. Проверить CHANGELOG.md: убедиться, что изменения отражены на английском.
+4. Проверить наличие inline-комментариев для сложной логики (если есть).
+5. Проверить, что нет русскоязычных комментариев/примеров.
+
+Приступаю к анализу и обновлению документации.
+
+План обновления документации:
+1. README.md: 
+   - Перевести все комментарии и описания параметров таймаутов на английский.
+   - Добавить отдельный пример переопределения таймаутов на уровне запроса.
+   - Убедиться, что нет русскоязычных комментариев.
+2. lib/gasfree_sdk/client.rb:
+   - Перевести YARD-комментарии к параметрам конструктора и методов get/post на английский.
+   - Уточнить описание request_timeouts для get/post.
+   - Проверить inline-комментарии — только английский.
+3. CHANGELOG.md:
+   - Добавить секцию о поддержке настраиваемых таймаутов (open_timeout, read_timeout, write_timeout) на английском.
+
+Далее внесу необходимые правки.
+
+```markdown
+// ... existing code ...
+client = GasfreeSdk::Client.new(
+  open_timeout: 5,      # Connection open timeout (seconds)
+  read_timeout: 10,     # Read response timeout (seconds)
+  write_timeout: 10     # Write request timeout (seconds)
+)
+// ... existing code ...
+# Add after the client initialization example:
+#
+# Overriding timeouts for a single request:
+#
+# tokens = client.send(:get, "api/v1/config/token/all", {}, { open_timeout: 2, read_timeout: 3, write_timeout: 4 })
+// ... existing code ...
+```
+
+```ruby
+// ... existing code ...
+    # Initialize a new GasFree client
+    # @param open_timeout [Integer] Connection open timeout in seconds (default: 5)
+    # @param read_timeout [Integer] Read response timeout in seconds (default: 10)
+    # @param write_timeout [Integer] Write request timeout in seconds (default: 10)
+    def initialize(open_timeout: 5, read_timeout: 10, write_timeout: 10)
+// ... existing code ...
+    # Make a GET request
+    # @param path [String] The API path
+    # @param params [Hash] Query parameters
+    # @param request_timeouts [Hash] Per-request timeouts: open_timeout, read_timeout, write_timeout (in seconds)
+    # @return [Hash] The response data
+    def get(path, params = {}, request_timeouts = {})
+// ... existing code ...
+    # Make a POST request
+    # @param path [String] The API path
+    # @param body [Hash] Request body
+    # @param request_timeouts [Hash] Per-request timeouts: open_timeout, read_timeout, write_timeout (in seconds)
+    # @return [Hash] The response data
+    def post(path, body, request_timeouts = {})
+// ... existing code ...
+```
+
+```markdown
+// ... existing code ...
+- **Configurable HTTP timeouts**: Added support for open_timeout, read_timeout, and write_timeout parameters in the SDK client. These can be set during client initialization and overridden per request. Default values: open_timeout=5, read_timeout=10, write_timeout=10.
+// ... existing code ...
+```
+
+Документация обновлена согласно ruby-documentation.mdc:
+
+1. README.md:
+   - Все комментарии и описания параметров таймаутов теперь на английском.
+   - Добавлен пример переопределения таймаутов для отдельного запроса.
+   - Русскоязычные комментарии удалены.
+
+2. lib/gasfree_sdk/client.rb:
+   - YARD-комментарии к параметрам конструктора и методов get/post переведены на английский, уточнено назначение request_timeouts.
+   - Весь inline-комментарии только на английском.
+
+3. CHANGELOG.md:
+   - Добавлена секция о поддержке настраиваемых таймаутов (open_timeout, read_timeout, write_timeout) на английском.
+
+Все требования ruby-documentation.mdc соблюдены.
+

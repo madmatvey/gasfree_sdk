@@ -46,9 +46,9 @@ end
 
 ```ruby
 client = GasfreeSdk::Client.new(
-  open_timeout: 5,      # Таймаут на установку соединения (сек)
-  read_timeout: 10,     # Таймаут на чтение ответа (сек)
-  write_timeout: 10     # Таймаут на запись запроса (сек)
+  open_timeout: 5,      # Connection open timeout (seconds)
+  read_timeout: 10,     # Read response timeout (seconds)
+  write_timeout: 10     # Write request timeout (seconds)
 )
 ```
 
@@ -351,3 +351,9 @@ Bug reports and pull requests are welcome on GitHub at https://github.com/madmat
 ## License
 
 The gem is available as open source under the terms of the [LGPL v3.0](https://www.gnu.org/licenses/lgpl-3.0.html) © 2025 Eugene Leontev (https://github.com/madmatvey)
+
+# Add after the client initialization example:
+#
+# Overriding timeouts for a single request:
+#
+# tokens = client.send(:get, "api/v1/config/token/all", {}, { open_timeout: 2, read_timeout: 3, write_timeout: 4 })

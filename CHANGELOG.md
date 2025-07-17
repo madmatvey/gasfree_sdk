@@ -69,3 +69,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Comprehensive test coverage for provider field mapping
 - RSpec testing framework integration
 - Improved error handling and validation throughout the SDK
+
+- **Configurable HTTP timeouts**: Added support for open_timeout, read_timeout, and write_timeout parameters in the SDK client. These can be set during client initialization and overridden per request. Default values: open_timeout=5, read_timeout=10, write_timeout=10.

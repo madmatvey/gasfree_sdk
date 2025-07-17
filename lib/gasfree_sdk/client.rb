@@ -13,9 +13,9 @@ module GasfreeSdk
     attr_reader :connection
 
     # Initialize a new GasFree client
-    # @param open_timeout [Integer] Таймаут на установку соединения (сек), по умолчанию 5
-    # @param read_timeout [Integer] Таймаут на чтение ответа (сек), по умолчанию 10
-    # @param write_timeout [Integer] Таймаут на запись запроса (сек), по умолчанию 10
+    # @param open_timeout [Integer] Connection open timeout in seconds (default: 5)
+    # @param read_timeout [Integer] Read response timeout in seconds (default: 10)
+    # @param write_timeout [Integer] Write request timeout in seconds (default: 10)
     def initialize(open_timeout: 5, read_timeout: 10, write_timeout: 10)
       @connection = Faraday.new(url: GasfreeSdk.config.api_endpoint, request: {
                                   open_timeout: open_timeout,
@@ -77,7 +77,7 @@ module GasfreeSdk
     # Make a GET request
     # @param path [String] The API path
     # @param params [Hash] Query parameters
-    # @param request_timeouts [Hash] Таймауты для запроса: open_timeout, read_timeout, write_timeout
+    # @param request_timeouts [Hash] Per-request timeouts: open_timeout, read_timeout, write_timeout (in seconds)
     # @return [Hash] The response data
     def get(path, params = {}, request_timeouts = {})
       timestamp = Time.now.to_i
@@ -91,7 +91,7 @@ module GasfreeSdk
     # Make a POST request
     # @param path [String] The API path
     # @param body [Hash] Request body
-    # @param request_timeouts [Hash] Таймауты для запроса: open_timeout, read_timeout, write_timeout
+    # @param request_timeouts [Hash] Per-request timeouts: open_timeout, read_timeout, write_timeout (in seconds)
     # @return [Hash] The response data
     def post(path, body, request_timeouts = {})
       timestamp = Time.now.to_i

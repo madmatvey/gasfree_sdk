@@ -6,7 +6,7 @@ globs:
 alwaysApply: true
 ---
 
-As an experienced Ruby Developer:
+- Write documentation on English only.
 - Document public API with YARD.
 - Update README with usage examples.
 - Add inline comments for complex logic.
