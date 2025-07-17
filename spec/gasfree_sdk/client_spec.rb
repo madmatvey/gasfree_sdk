@@ -243,4 +243,85 @@ RSpec.describe GasfreeSdk::Client do
       end
     end
   end
+
+  describe "rate limiting retry behavior" do
+    before do
+      # Configure faster retries for testing
+      GasfreeSdk.configure do |config|
+        config.rate_limit_retry_options = {
+          max_attempts: 3,
+          base_delay: 0.01, # Very short delay for tests
+          max_delay: 0.05,
+          jitter_factor: 0
+        }
+      end
+    end
+
+    it "retries on 429 response with Retry-After header" do
+      # First request returns 429, second succeeds
+      stub_request(:get, "https://test.gasfree.io/api/v1/config/token/all")
+        .to_return(
+          { status: 429, headers: { "Retry-After" => "1" } },
+          {
+            status: 200,
+            body: {
+              code: 200,
+              data: { tokens: [] }
+            }.to_json,
+            headers: { "Content-Type" => "application/json" }
+          }
+        )
+
+      # Should succeed after retry
+      result = client.tokens
+      expect(result).to eq([])
+    end
+
+    it "retries on 429 response without Retry-After header using exponential backoff" do
+      # First two requests return 429, third succeeds
+      stub_request(:get, "https://test.gasfree.io/api/v1/config/token/all")
+        .to_return(
+          { status: 429 },
+          { status: 429 },
+          {
+            status: 200,
+            body: {
+              code: 200,
+              data: { tokens: [] }
+            }.to_json,
+            headers: { "Content-Type" => "application/json" }
+          }
+        )
+
+      result = client.tokens
+      expect(result).to eq([])
+    end
+
+    it "stops retrying after max attempts and returns last 429 response" do
+      # All requests return 429
+      stub_request(:get, "https://test.gasfree.io/api/v1/config/token/all")
+        .to_return(status: 429)
+
+      expect { client.tokens }.to raise_error(GasfreeSdk::RateLimitError)
+    end
+
+    it "respects Retry-After header with HTTP date format" do
+      retry_time = Time.now + 1
+      stub_request(:get, "https://test.gasfree.io/api/v1/config/token/all")
+        .to_return(
+          { status: 429, headers: { "Retry-After" => retry_time.httpdate } },
+          {
+            status: 200,
+            body: {
+              code: 200,
+              data: { tokens: [] }
+            }.to_json,
+            headers: { "Content-Type" => "application/json" }
+          }
+        )
+
+      result = client.tokens
+      expect(result).to eq([])
+    end
+  end
 end
