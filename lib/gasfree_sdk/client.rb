@@ -13,8 +13,15 @@ module GasfreeSdk
     attr_reader :connection
 
     # Initialize a new GasFree client
-    def initialize
-      @connection = Faraday.new(url: GasfreeSdk.config.api_endpoint) do |f|
+    # @param open_timeout [Integer] Таймаут на установку соединения (сек), по умолчанию 5
+    # @param read_timeout [Integer] Таймаут на чтение ответа (сек), по умолчанию 10
+    # @param write_timeout [Integer] Таймаут на запись запроса (сек), по умолчанию 10
+    def initialize(open_timeout: 5, read_timeout: 10, write_timeout: 10)
+      @connection = Faraday.new(url: GasfreeSdk.config.api_endpoint, request: {
+                                  open_timeout: open_timeout,
+                                  read_timeout: read_timeout,
+                                  write_timeout: write_timeout
+                                }) do |f|
         f.request :json
         f.request :retry, GasfreeSdk.config.retry_options
         f.response :json
@@ -70,11 +77,13 @@ module GasfreeSdk
     # Make a GET request
     # @param path [String] The API path
     # @param params [Hash] Query parameters
+    # @param request_timeouts [Hash] Таймауты для запроса: open_timeout, read_timeout, write_timeout
     # @return [Hash] The response data
-    def get(path, params = {})
+    def get(path, params = {}, request_timeouts = {})
       timestamp = Time.now.to_i
       response = connection.get(path, params) do |req|
         sign_request(req, "GET", normalize_path(path), timestamp)
+        request_timeouts.each { |k, v| req.options.send("#{k}=", v) if v }
       end
       handle_response(response)
     end
@@ -82,12 +91,14 @@ module GasfreeSdk
     # Make a POST request
     # @param path [String] The API path
     # @param body [Hash] Request body
+    # @param request_timeouts [Hash] Таймауты для запроса: open_timeout, read_timeout, write_timeout
     # @return [Hash] The response data
-    def post(path, body)
+    def post(path, body, request_timeouts = {})
       timestamp = Time.now.to_i
       response = connection.post(path) do |req|
         req.body = body
         sign_request(req, "POST", normalize_path(path), timestamp)
+        request_timeouts.each { |k, v| req.options.send("#{k}=", v) if v }
       end
       handle_response(response)
     end

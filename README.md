@@ -45,7 +45,11 @@ end
 ### Initialize Client
 
 ```ruby
-client = GasfreeSdk.client
+client = GasfreeSdk::Client.new(
+  open_timeout: 5,      # Таймаут на установку соединения (сек)
+  read_timeout: 10,     # Таймаут на чтение ответа (сек)
+  write_timeout: 10     # Таймаут на запись запроса (сек)
+)
 ```
 
 ### Get Supported Tokens
