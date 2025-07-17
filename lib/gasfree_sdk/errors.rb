@@ -34,6 +34,9 @@ module GasfreeSdk
   # Transfer not found errors
   class TransferNotFoundError < APIError; end
 
+  # Rate limit exceeded errors
+  class RateLimitError < APIError; end
+
   class << self
     # Map error codes to specific error classes
     ERROR_CODE_MAP = {
@@ -41,7 +44,8 @@ module GasfreeSdk
       "DEADLINE_EXCEEDED" => DeadlineExceededError,
       "INSUFFICIENT_BALANCE" => InsufficientBalanceError,
       "ADDRESS_NOT_FOUND" => AddressNotFoundError,
-      "TRANSFER_NOT_FOUND" => TransferNotFoundError
+      "TRANSFER_NOT_FOUND" => TransferNotFoundError,
+      "RATE_LIMIT_EXCEEDED" => RateLimitError
     }.freeze
 
     # Factory method to create appropriate error instances

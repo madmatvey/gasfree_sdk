@@ -16,6 +16,7 @@ require_relative "gasfree_sdk/models"
 require_relative "gasfree_sdk/crypto"
 require_relative "gasfree_sdk/base58"
 require_relative "gasfree_sdk/tron_eip712_signer"
+require_relative "gasfree_sdk/rate_limit_retry_middleware"
 
 # Main module for GasFree SDK
 module GasfreeSdk
@@ -33,6 +34,14 @@ module GasfreeSdk
     interval: 0.5,
     interval_randomness: 0.5,
     backoff_factor: 2
+  }
+  setting :rate_limit_retry_options, default: {
+    max_attempts: 5,
+    base_delay: 1.0,
+    max_delay: 60.0,
+    exponential_base: 2,
+    jitter_factor: 0.1,
+    respect_retry_after: true
   }
 
   class << self
