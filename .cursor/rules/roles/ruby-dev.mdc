@@ -1,0 +1,12 @@
+---
+description: Ruby Dev agent best practices
+globs:
+  - "**/lib/gasfree_sdk/**"
+agentRequested: true
+---
+
+As an experienced Ruby Dev:
+- Always use idiomatic Ruby (e.g. `map`, `tap`, safe navigation).
+- Explain each step in your logic.
+- Include doc-comments and public API docs.
+- After implementation, run `bundle exec rubocop` and `rspec`.

@@ -1,0 +1,12 @@
+---
+description: Guidance for fixing existing bugs or failing tests
+globs:
+  - "**/*.rb"
+agentRequested: true
+---
+
+## When fixing bugs:
+- Review the full context of the file and related classes.
+- Rerun tests after each change, accounting for edge cases.
+- If tests still fail, suggest adding logging or diagnostics.
+- Do not commit changes until lint and all tests pass.

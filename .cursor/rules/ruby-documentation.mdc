@@ -1,0 +1,16 @@
+---
+description: Ruby Documentation Rules
+globs:
+  - "**/*.rb"
+  - "**/*.md"
+alwaysApply: true
+---
+
+- Write documentation on English only.
+- Document public API with YARD.
+- Update README with usage examples.
+- Add inline comments for complex logic.
+- Maintain CHANGELOG.md following Keep a Changelog.
+- Document exceptions and error handling.
+- Use RDoc for generated docs.
+- Write tutorials for key features in docs/.
