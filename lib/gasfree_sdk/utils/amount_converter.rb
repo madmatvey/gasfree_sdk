@@ -5,7 +5,14 @@ module GasfreeSdk
     # Represents an asset in a GasFree account
     class AmountConverter
       def self.to_base_units(amount, decimals)
-        (BigDecimal(amount.to_s) * (10**decimals)).to_i
+        raise ArgumentError, "amount is nil" if amount.nil?
+
+        num = BigDecimal(amount.to_s)
+        raise ArgumentError, "amount must be non-negative" if num.negative?
+
+        (num * (10**decimals)).to_i
+      rescue ArgumentError, TypeError
+        raise ArgumentError, "amount must be a valid number"
       end
 
       def self.from_base_units(integer_amount, decimals)
