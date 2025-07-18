@@ -22,11 +22,19 @@ module GasfreeSdk
   extend Dry::Configurable
 
   def self.validate_url!(url)
+    # Ensure the URL is not nil or empty for robustness and security
+    raise ArgumentError, "API endpoint URL cannot be nil or empty" if url.nil? || url.strip.empty?
+
+    # Parse the URL and check for valid HTTP/HTTPS scheme
     uri = URI.parse(url)
-    raise ArgumentError, "Invalid API endpoint URL: #{url}" unless uri.is_a?(URI::HTTP) || uri.is_a?(URI::HTTPS)
+    unless uri.is_a?(URI::HTTP) || uri.is_a?(URI::HTTPS)
+      # Only HTTP and HTTPS schemes are allowed to prevent SSRF and misconfiguration
+      raise ArgumentError, "Invalid API endpoint URL: #{url}"
+    end
 
     url
   rescue URI::InvalidURIError
+    # Raise a clear error if the URL cannot be parsed
     raise ArgumentError, "Invalid API endpoint URL: #{url}"
   end
 

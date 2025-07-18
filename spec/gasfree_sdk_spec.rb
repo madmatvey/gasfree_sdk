@@ -39,5 +39,17 @@ RSpec.describe GasfreeSdk do
         described_class.configure { |config| config.api_endpoint = "ftp://example.com" }
       end.to raise_error(ArgumentError, /Invalid API endpoint URL/)
     end
+
+    it "raises error for nil URL" do
+      expect do
+        described_class.configure { |config| config.api_endpoint = nil }
+      end.to raise_error(ArgumentError, /cannot be nil or empty/)
+    end
+
+    it "raises error for empty string URL" do
+      expect do
+        described_class.configure { |config| config.api_endpoint = "" }
+      end.to raise_error(ArgumentError, /cannot be nil or empty/)
+    end
   end
 end
