@@ -326,7 +326,7 @@ See the `examples/` directory for complete working examples:
 
 ## API Endpoint URL Validation
 
-Starting from version X.X.X, the `api_endpoint` configuration parameter is validated for correctness. If you try to set an invalid URL (for example, a string without a scheme, with an unsupported scheme, nil, or empty), an `ArgumentError` will be raised.
+The `api_endpoint` configuration parameter is validated for correctness. If you try to set an invalid URL (for example, a string without a scheme, with an unsupported scheme, nil, or empty), an `ArgumentError` will be raised.
 
 **Examples:**
 
