@@ -15,3 +15,7 @@
 
 # Ruby version
 .ruby-version
+
+/.cursor/
+/.idea/
+

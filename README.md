@@ -323,6 +323,25 @@ See the `examples/` directory for complete working examples:
 
 - `examples/simple_usage_example.rb` - Basic TronEIP712Signer usage
 
+
+## API Endpoint URL Validation
+
+The `api_endpoint` configuration parameter is validated for correctness. If you try to set an invalid URL (for example, a string without a scheme, with an unsupported scheme, nil, or empty), an `ArgumentError` will be raised.
+
+**Examples:**
+
+```ruby
+GasfreeSdk.configure do |config|
+  config.api_endpoint = "https://valid.example.com/" # OK
+  config.api_endpoint = "not a url"                  # => ArgumentError
+  config.api_endpoint = "ftp://example.com"          # => ArgumentError
+  config.api_endpoint = nil                           # => ArgumentError
+  config.api_endpoint = ""                           # => ArgumentError
+end
+```
+
+Only `http` and `https` schemes are supported.
+
 ## Dependencies
 
 - `dry-configurable` - Configuration management
