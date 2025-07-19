@@ -49,7 +49,7 @@ module GasfreeSdk
       attribute :sig, Types::String
 
       def self.build_with_token(token:, human_amount:, **args)
-        base_amount = GasfreeSdk::Utils::AmountConverter.to_base_units(human_amount, token.decimals)
+        base_amount = GasfreeSdk::Utils::AmountConverter.to_base_units(human_amount, token.decimal)
         new(token: token.token_address, value: base_amount, **args)
       end
     end

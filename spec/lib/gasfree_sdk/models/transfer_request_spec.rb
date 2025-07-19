@@ -14,12 +14,11 @@ RSpec.describe GasfreeSdk::Models::TransferRequest do
         transfer_fee: "0",
         supported: true,
         symbol: "USDT",
-        decimal: 6,
-        decimals: 6
+        decimal: 6
       )
     end
 
-    it "корректно преобразует human_amount в base units" do
+    it "correctly converts human_amount to base units" do
       req = described_class.build_with_token(
         token: token,
         human_amount: 2.5,
@@ -35,7 +34,7 @@ RSpec.describe GasfreeSdk::Models::TransferRequest do
       expect(req.value).to eq("2500000")
     end
 
-    it "выбрасывает ошибку при некорректном формате суммы" do
+    it "raises an error for invalid amount format" do
       expect do
         described_class.build_with_token(token: token, human_amount: "abc")
       end.to raise_error(ArgumentError)

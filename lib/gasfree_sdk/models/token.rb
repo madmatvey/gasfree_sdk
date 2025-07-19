@@ -37,10 +37,6 @@ module GasfreeSdk
       # @!attribute [r] decimal
       #   @return [Integer] The token's decimal places
       attribute :decimal, Types::Integer.constrained(gteq: 0)
-
-      # @!attribute [r] decimals
-      #   @return [Integer] The token's decimals places
-      attribute? :decimals, Types::Coercible::Integer.optional
     end
   end
 end

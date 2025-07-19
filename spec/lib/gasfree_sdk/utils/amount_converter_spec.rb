@@ -26,5 +26,9 @@ RSpec.describe GasfreeSdk::Utils::AmountConverter do
     it "converts base units to a human amount" do
       expect(described_class.from_base_units(1_500_000, 6)).to eq(1.5)
     end
+
+    it "raises error if decimal is nil" do
+      expect { described_class.to_base_units(1, nil) }.to raise_error(ArgumentError)
+    end
   end
 end
