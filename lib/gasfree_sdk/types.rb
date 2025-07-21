@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "dry-types"
+require "gasfree_sdk/time_parser"
 
 module GasfreeSdk
   # Custom types for the SDK
@@ -56,17 +57,7 @@ module GasfreeSdk
     module JSON
       # Convert millisecond timestamp or ISO date string to Time object
       # Takes an integer (milliseconds) or string (ISO format) and returns a Time
-      Time = Types.Constructor(::Time) do |value|
-        case value
-        when ::Integer
-          ::Time.at(value / 1000.0)
-        when ::String
-          ::Time.parse(value)
-        else
-          raise ArgumentError, "Expected Integer or String, got #{value.class}"
-        end
-      end
-
+      Time = Types.Constructor(::Time) { |value| GasfreeSdk::TimeParser.parse(value) }
       # Convert integer amount to string
       Amount = Types.Constructor(Types::String, &:to_s)
     end
