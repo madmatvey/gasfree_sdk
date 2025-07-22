@@ -38,6 +38,9 @@ GasfreeSdk.configure do |config|
   config.api_secret = "your-api-secret"
   config.api_endpoint = "https://open.gasfree.io/tron/"  # TRON endpoint
 end
+
+# Note: The api_endpoint must be a valid http or https URL. If an invalid value is provided,
+# a GasfreeSdk::Error will be raised during configuration.
 ```
 
 ## Basic Usage
