@@ -16,36 +16,36 @@ RSpec.describe GasfreeSdk do
   end
 
   it "raises error for invalid api_endpoint URL" do
-    expect {
+    expect do
       described_class.configure do |config|
         config.api_endpoint = "not a url"
       end
-    }.to raise_error(GasfreeSdk::Error, /Invalid api_endpoint URL/)
+    end.to raise_error(GasfreeSdk::Error, /Invalid api_endpoint URL/)
 
-    expect {
+    expect do
       described_class.configure do |config|
         config.api_endpoint = "ftp://example.com"
       end
-    }.to raise_error(GasfreeSdk::Error, /Invalid api_endpoint URL/)
+    end.to raise_error(GasfreeSdk::Error, /Invalid api_endpoint URL/)
 
-    expect {
+    expect do
       described_class.configure do |config|
         config.api_endpoint = "http:///missinghost"
       end
-    }.to raise_error(GasfreeSdk::Error, /Invalid api_endpoint URL/)
+    end.to raise_error(GasfreeSdk::Error, /Invalid api_endpoint URL/)
   end
 
   it "accepts valid http and https api_endpoint URLs" do
-    expect {
+    expect do
       described_class.configure do |config|
         config.api_endpoint = "http://example.com/"
       end
-    }.not_to raise_error
+    end.not_to raise_error
 
-    expect {
+    expect do
       described_class.configure do |config|
         config.api_endpoint = "https://example.com/"
       end
-    }.not_to raise_error
+    end.not_to raise_error
   end
 end
