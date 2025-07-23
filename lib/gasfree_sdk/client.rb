@@ -16,6 +16,7 @@ module GasfreeSdk
     def initialize
       @connection = Faraday.new(url: GasfreeSdk.config.api_endpoint) do |f|
         f.request :json
+        f.use GasfreeSdk::RateLimitRetryMiddleware, GasfreeSdk.config.rate_limit_retry_options
         f.request :retry, GasfreeSdk.config.retry_options
         f.response :json
         f.use GasfreeSdk::SanitizedLogsMiddleware, logger: Logger.new($stdout) if ENV["DEBUG_GASFREE_SDK"]
@@ -134,6 +135,15 @@ module GasfreeSdk
     # @return [Hash] The response data
     # @raise [APIError] If the response indicates an error
     def handle_response(response)
+      # Handle rate limiting specifically
+      if response.status == 429
+        raise RateLimitError.new(
+          "Rate limit exceeded. Please retry after some time.",
+          code: "RATE_LIMIT_EXCEEDED",
+          reason: "Too many requests"
+        )
+      end
+
       data = response.body
 
       return data if data["code"] == 200

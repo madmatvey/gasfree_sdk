@@ -43,6 +43,35 @@ end
 # a GasfreeSdk::Error will be raised during configuration.
 ```
 
+### Rate Limiting Configuration
+
+The SDK automatically handles HTTP 429 (Rate Limited) responses with intelligent retry logic:
+
+```ruby
+GasfreeSdk.configure do |config|
+  # ... other config options
+  
+  # Rate limiting retry configuration
+  config.rate_limit_retry_options = {
+    max_attempts: 5,        # Maximum retry attempts for 429 errors
+    base_delay: 1.0,        # Base delay in seconds
+    max_delay: 60.0,        # Maximum delay cap in seconds
+    exponential_base: 2,    # Exponential backoff multiplier
+    jitter_factor: 0.1,     # Jitter factor (10%) to avoid thundering herd
+    respect_retry_after: true # Honor Retry-After headers from server
+  }
+end
+```
+
+**Features:**
+- **Automatic 429 Detection**: Automatically detects and handles rate limiting responses
+- **Retry-After Support**: Respects server-provided `Retry-After` headers (both seconds and HTTP date formats)
+- **Exponential Backoff**: Uses exponential backoff with configurable base and maximum delays
+- **Jitter**: Adds randomized jitter to prevent thundering herd effects
+- **Intelligent Fallback**: Falls back to exponential backoff when `Retry-After` header is missing or invalid
+- **Configurable Limits**: Customizable maximum attempts and delay caps
+- **Comprehensive Logging**: Detailed logging of retry attempts for monitoring and debugging
+
 ## Basic Usage
 
 ### Initialize Client
