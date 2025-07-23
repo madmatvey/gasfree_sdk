@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "gasfree_sdk/utils/amount_converter"
+
 module GasfreeSdk
   module Models
     # Represents a GasFree transfer request
@@ -45,6 +47,11 @@ module GasfreeSdk
       # @!attribute [r] sig
       #   @return [String] User's signature
       attribute :sig, Types::String
+
+      def self.build_with_token(token:, human_amount:, **args)
+        base_amount = GasfreeSdk::Utils::AmountConverter.to_base_units(human_amount, token.decimal)
+        new(token: token.token_address, value: base_amount, **args)
+      end
     end
   end
 end
