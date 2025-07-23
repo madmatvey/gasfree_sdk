@@ -45,7 +45,11 @@ module GasfreeSdk
     #     config.api_endpoint = "https://open.gasfree.io/tron/"
     #   end
     def configure
+      old_endpoint = config.api_endpoint
       yield config
+      return unless config.api_endpoint != old_endpoint
+
+      validate_api_endpoint!(config.api_endpoint)
     end
 
     # Create a new client instance
@@ -58,6 +62,20 @@ module GasfreeSdk
     # @return [void]
     def reset_client!
       @client = nil
+    end
+
+    private
+
+    def validate_api_endpoint!(value)
+      begin
+        uri = URI.parse(value)
+        unless uri.is_a?(URI::HTTP) && uri.host && !uri.host.empty? && %w[http https].include?(uri.scheme)
+          raise ArgumentError
+        end
+      rescue StandardError
+        raise GasfreeSdk::Error, "Invalid api_endpoint URL: '#{value}'. Must be a valid http(s) URL."
+      end
+      value
     end
   end
 
