@@ -108,7 +108,7 @@ module GasfreeSdk
       api_key = GasfreeSdk.config.api_key
       api_secret = GasfreeSdk.config.api_secret
 
-      raise AuthenticationError, "API key and secret are required" if api_key.nil? || api_secret.nil?
+      validate_credentials!(api_key, api_secret)
 
       # Extract the base path from the endpoint URL
       # For https://open-test.gasfree.io/nile/ the base path is /nile
@@ -290,6 +290,30 @@ module GasfreeSdk
     # @return [Object] The field value
     def get_field_value(data, camel_case_key, snake_case_key)
       data[camel_case_key] || data[snake_case_key]
+    end
+
+    # Validate API credentials are present and not empty
+    # @param api_key [String, nil] API key to validate
+    # @param api_secret [String, nil] API secret to validate
+    # @raise [ConfigurationError] If credentials are missing or empty
+    # @return [void]
+    def validate_credentials!(api_key, api_secret)
+      return unless blank?(api_key) || blank?(api_secret)
+
+      raise ConfigurationError, "API key and secret must be configured and cannot be empty. " \
+                                "Please set valid values for api_key and api_secret in your configuration."
+    end
+
+    # Check if value is nil, empty string, or whitespace-only string
+    # @param value [Object] Value to check
+    # @return [Boolean] True if value is nil, empty, or whitespace-only
+    def blank?(value)
+      return true if value.nil?
+      return false unless value.respond_to?(:empty?)
+      return true if value.empty?
+
+      # Check for whitespace-only strings
+      value.respond_to?(:strip) && value.strip.empty?
     end
   end
 end

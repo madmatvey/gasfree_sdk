@@ -221,8 +221,61 @@ RSpec.describe GasfreeSdk::Client do
         end
       end
 
-      it "raises AuthenticationError" do
-        expect { client.tokens }.to raise_error(GasfreeSdk::AuthenticationError)
+      it "raises ConfigurationError for nil credentials" do
+        expect { client.tokens }.to raise_error(
+          GasfreeSdk::ConfigurationError,
+          /API key and secret must be configured and cannot be empty/
+        )
+      end
+    end
+
+    context "with empty string credentials" do
+      it "raises ConfigurationError for empty API key" do
+        GasfreeSdk.configure do |config|
+          config.api_key = ""
+          config.api_secret = "valid-secret"
+        end
+
+        expect { client.tokens }.to raise_error(
+          GasfreeSdk::ConfigurationError,
+          /API key and secret must be configured and cannot be empty/
+        )
+      end
+
+      it "raises ConfigurationError for empty API secret" do
+        GasfreeSdk.configure do |config|
+          config.api_key = "valid-key"
+          config.api_secret = ""
+        end
+
+        expect { client.tokens }.to raise_error(
+          GasfreeSdk::ConfigurationError,
+          /API key and secret must be configured and cannot be empty/
+        )
+      end
+
+      it "raises ConfigurationError for both empty credentials" do
+        GasfreeSdk.configure do |config|
+          config.api_key = ""
+          config.api_secret = ""
+        end
+
+        expect { client.tokens }.to raise_error(
+          GasfreeSdk::ConfigurationError,
+          /API key and secret must be configured and cannot be empty/
+        )
+      end
+
+      it "raises ConfigurationError for whitespace-only credentials" do
+        GasfreeSdk.configure do |config|
+          config.api_key = "   "
+          config.api_secret = "\t\n"
+        end
+
+        expect { client.tokens }.to raise_error(
+          GasfreeSdk::ConfigurationError,
+          /API key and secret must be configured and cannot be empty/
+        )
       end
     end
 

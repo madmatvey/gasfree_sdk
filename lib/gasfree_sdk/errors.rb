@@ -13,6 +13,9 @@ module GasfreeSdk
     end
   end
 
+  # Configuration related errors
+  class ConfigurationError < Error; end
+
   # Authentication related errors
   class AuthenticationError < Error; end
 
