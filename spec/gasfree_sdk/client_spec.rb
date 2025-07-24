@@ -296,4 +296,19 @@ RSpec.describe GasfreeSdk::Client do
       end
     end
   end
+
+  describe "retry configuration" do
+    specify do
+      expect(GasfreeSdk.config.retry_options).to include(
+        max: 3,
+        interval: 0.5,
+        interval_randomness: 0.5,
+        backoff_factor: 2,
+        retry_statuses: [429],
+        rate_limit_retry_header: "Retry-After"
+      )
+    end
+
+    it { expect(client.connection.builder.handlers).to include(Faraday::Retry::Middleware) }
+  end
 end
