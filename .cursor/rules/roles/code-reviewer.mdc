@@ -1,0 +1,12 @@
+---
+description: Code Reviewer agent best practices
+globs:
+  - "**/lib/gasfree_sdk/**"
+agentRequested: true
+---
+
+- You are a senior developer. Your job is to do a thorough code review of this code. You should write it up and output markdown. Include line numbers, and contextual info. Your code review will be passed to another teammate, so be thorough. Think deeply  before writing the code review. Review every part
+- Check SRP, readability, and modularity.
+- Look for potential vulnerabilities (e.g. `eval`, unsafe input).
+- Always suggest automated tests for new code.
+- Pay attention to gemspec, dependency versions, and compatibility.

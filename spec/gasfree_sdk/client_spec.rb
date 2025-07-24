@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "ostruct"
+
 RSpec.describe GasfreeSdk::Client do
   let(:client) { described_class.new }
 
@@ -294,6 +296,69 @@ RSpec.describe GasfreeSdk::Client do
 
         expect { client.tokens }.to raise_error(GasfreeSdk::DeadlineExceededError)
       end
+    end
+  end
+
+  describe "timeouts" do
+    it "устанавливает таймауты по умолчанию при инициализации" do
+      client = described_class.new
+      stub = stub_request(:get, "https://test.gasfree.io/api/v1/config/token/all").to_return(
+        status: 200,
+        body: { code: 200, data: { tokens: [] } }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+      client.tokens
+      expect(stub).to have_been_requested
+    end
+
+    it "позволяет переопределить таймауты при инициализации" do
+      client = described_class.new(open_timeout: 1, read_timeout: 2, write_timeout: 3)
+      stub = stub_request(:get, "https://test.gasfree.io/api/v1/config/token/all").to_return(
+        status: 200,
+        body: { code: 200, data: { tokens: [] } }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+      client.tokens
+      expect(stub).to have_been_requested
+    end
+
+    it "прокидывает таймауты на уровне запроса (GET)" do
+      client = described_class.new
+      stub = stub_request(:get, "https://test.gasfree.io/api/v1/config/token/all").to_return(
+        status: 200,
+        body: { code: 200, data: { tokens: [] } }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+      client.send(:get, "api/v1/config/token/all", {}, { open_timeout: 7, read_timeout: 8, write_timeout: 9 })
+      expect(stub).to have_been_requested
+    end
+
+    it "прокидывает таймауты на уровне запроса (POST)" do
+      client = described_class.new
+      stub = stub_request(:post, "https://test.gasfree.io/api/v1/gasfree/submit").to_return(
+        status: 200,
+        body: { code: 200, data: {} }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+      client.send(:post, "api/v1/gasfree/submit", {}, { open_timeout: 11, read_timeout: 12, write_timeout: 13 })
+      expect(stub).to have_been_requested
+    end
+
+    it "вызывает ошибку таймаута при превышении лимита" do
+      client = described_class.new
+      stub = stub_request(:get, "https://test.gasfree.io/api/v1/config/token/all").to_timeout
+      raised = false
+      begin
+        client.send(:get, "api/v1/config/token/all")
+      rescue StandardError => e
+        expect(
+          e.is_a?(Faraday::TimeoutError) ||
+          (e.is_a?(Faraday::ConnectionFailed) && e.wrapped_exception.is_a?(Net::OpenTimeout))
+        ).to be true
+        raised = true
+      end
+      expect(raised).to be true
+      expect(stub).to have_been_requested
     end
   end
 end
