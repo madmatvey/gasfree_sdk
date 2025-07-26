@@ -32,7 +32,9 @@ module GasfreeSdk
     max: 3,
     interval: 0.5,
     interval_randomness: 0.5,
-    backoff_factor: 2
+    backoff_factor: 2,
+    retry_statuses: [429],
+    rate_limit_retry_header: "Retry-After"
   }
 
   class << self
