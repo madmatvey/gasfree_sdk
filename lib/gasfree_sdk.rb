@@ -38,7 +38,7 @@ module GasfreeSdk
   }
 
   class << self
-    # Configure the SDK
+    # Configure the SDK (thread-safe, global)
     # @yield [config] Configuration block
     # @example
     #   GasfreeSdk.configure do |config|
@@ -52,18 +52,19 @@ module GasfreeSdk
       return unless config.api_endpoint != old_endpoint
 
       validate_api_endpoint!(config.api_endpoint)
+      # Reset all thread-local clients if needed (not implemented here)
     end
 
-    # Create a new client instance
+    # Get or create a thread-local client instance
     # @return [GasfreeSdk::Client]
     def client
-      @client ||= Client.new
+      Thread.current[:gasfree_sdk_client] ||= Client.new
     end
 
-    # Reset the client instance
+    # Reset the client instance for the current thread
     # @return [void]
     def reset_client!
-      @client = nil
+      Thread.current[:gasfree_sdk_client] = nil
     end
 
     private
@@ -83,5 +84,30 @@ module GasfreeSdk
 
   # Base error class for all SDK errors
   class Error < StandardError; end
-  # Your code goes here...
+
+  # ----------------------------------------------------------------------
+  # Thread Safety Documentation
+  # ----------------------------------------------------------------------
+  #
+  # Thread Safety:
+  #   - The SDK configuration is globally thread-safe (handled by dry-configurable).
+  #   - Each thread gets its own client instance (thread-local, via Thread.current).
+  #   - All client instances use the same global configuration.
+  #   - Do NOT attempt to create per-thread config objects; always use GasfreeSdk.config.
+  #
+  # Usage Example:
+  #   # Configure globally (thread-safe)
+  #   GasfreeSdk.configure do |config|
+  #     config.api_key = "your-api-key"
+  #     config.api_secret = "your-api-secret"
+  #   end
+  #
+  #   # In each thread:
+  #   client = GasfreeSdk.client
+  #   # ... use client ...
+  #
+  #   # To reset the client for the current thread:
+  #   GasfreeSdk.reset_client!
+  #
+  # ----------------------------------------------------------------------
 end
