@@ -9,6 +9,10 @@ RSpec.describe GasfreeSdk::Utils::AmountConverter do
       expect(described_class.to_base_units(1.5, 6)).to eq(1_500_000)
     end
 
+    it "raises error for zero amount" do
+      expect { described_class.to_base_units(0, 6) }.to raise_error(ArgumentError)
+    end
+
     it "raises error for negative amount" do
       expect { described_class.to_base_units(-1, 6) }.to raise_error(ArgumentError)
     end
@@ -28,7 +32,7 @@ RSpec.describe GasfreeSdk::Utils::AmountConverter do
     end
 
     it "raises error if decimal is nil" do
-      expect { described_class.to_base_units(1, nil) }.to raise_error(ArgumentError)
+      expect { described_class.from_base_units(1, nil) }.to raise_error(ArgumentError)
     end
   end
 end
