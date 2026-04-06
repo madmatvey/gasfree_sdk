@@ -39,5 +39,17 @@ RSpec.describe GasfreeSdk::Models::TransferRequest do
         described_class.build_with_token(token: token, human_amount: "abc")
       end.to raise_error(ArgumentError)
     end
+
+    it "raises an error for zero values" do
+      expect do
+        described_class.build_with_token(token: token, human_amount: "0")
+      end.to raise_error(ArgumentError)
+    end
+
+    it "raises an error for negative values" do
+      expect do
+        described_class.build_with_token(token: token, human_amount: "-1")
+      end.to raise_error(ArgumentError)
+    end
   end
 end
