@@ -21,6 +21,8 @@ module GasfreeSdk
         f.use GasfreeSdk::SanitizedLogsMiddleware, logger: Logger.new($stdout) if ENV["DEBUG_GASFREE_SDK"]
         f.adapter Faraday.default_adapter
       end
+
+      check_configuration!
     end
 
     # Get all supported tokens
@@ -66,6 +68,11 @@ module GasfreeSdk
     end
 
     private
+
+    # Check configuration by making a test API call
+    def check_configuration!
+      get("api/v1/config/token/all")
+    end
 
     # Make a GET request
     # @param path [String] The API path

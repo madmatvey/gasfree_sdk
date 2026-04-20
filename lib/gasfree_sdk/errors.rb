@@ -40,6 +40,7 @@ module GasfreeSdk
   class << self
     # Map error codes to specific error classes
     ERROR_CODE_MAP = {
+      "AUTHENTICATION_ERROR" => AuthenticationError,
       "INVALID_SIGNATURE" => InvalidSignatureError,
       "DEADLINE_EXCEEDED" => DeadlineExceededError,
       "INSUFFICIENT_BALANCE" => InsufficientBalanceError,
