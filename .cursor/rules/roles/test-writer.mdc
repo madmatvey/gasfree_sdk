@@ -1,0 +1,12 @@
+---
+description: Test Writer agent guidelines
+globs:
+  - "**/spec/**/*.rb"
+agentRequested: true
+---
+
+When writing RSpec tests:
+- Cover both positive and negative scenarios.
+- Use `let`, `subject`, and `shared_examples` for DRY tests.
+- Mock HTTP and time-based behavior (e.g. Timecop, VCR, Webmock).
+- Ensure edge cases (nil, empty, exceptions) are covered.

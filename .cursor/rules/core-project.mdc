@@ -1,0 +1,11 @@
+---
+description: Core guidelines for Ruby/gem development
+globs:
+  - "**/*.rb"
+alwaysApply: true
+---
+
+- Always follow general Ruby best practices: SRP, snake_case, readability, and short methods.
+- Use `bundler`, `rspec`, and `rubocop`; ensure tests and lint pass.
+- When adding new features, maintain backward compatibility.
+- Cover any changes with tests (unit and edge cases) before implementation.

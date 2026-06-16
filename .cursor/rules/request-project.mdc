@@ -1,0 +1,12 @@
+---
+description: Guidelines for adding new features or refactoring
+globs:
+  - "**/*.rb"
+agentRequested: true
+---
+
+## When requesting new logic:
+- Formulate a TARS-style prompt: Task, Assumptions, Requirements, Specification.
+- Provide context: Ruby version/gem version, constraints.
+- Propose a plan of changes before generating code.
+- Keep the structure: doc-comment → code → tests.
